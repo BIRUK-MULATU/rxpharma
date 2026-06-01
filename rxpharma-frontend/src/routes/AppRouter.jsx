@@ -7,6 +7,7 @@ import DashboardPage from '../pages/dashboard/DashboardPage'
 import DrugsPage from '../pages/drugs/DrugsPage'
 import SuppliersPage from '../pages/suppliers/SuppliersPage'
 import PrescriptionsPage from '../pages/prescriptions/PrescriptionsPage'
+import SalesPage from '../pages/sales/SalesPage'
 
 export default function AppRouter() {
   const { user } = useAuth()
@@ -32,6 +33,11 @@ export default function AppRouter() {
       <Route path="/prescriptions" element={
         <ProtectedRoute roles={['ADMIN', 'PHARMACIST']}>
           <PrescriptionsPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/sales" element={
+        <ProtectedRoute roles={['ADMIN', 'CASHIER']}>
+          <SalesPage />
         </ProtectedRoute>
       } />
       <Route path="*" element={<Navigate to="/" />} />
