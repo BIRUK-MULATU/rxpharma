@@ -9,6 +9,7 @@ import SuppliersPage from '../pages/suppliers/SuppliersPage'
 import PrescriptionsPage from '../pages/prescriptions/PrescriptionsPage'
 import SalesPage from '../pages/sales/SalesPage'
 import PurchaseOrdersPage from '../pages/purchaseOrders/PurchaseOrdersPage'
+import UsersPage from '../pages/users/UsersPage'
 
 export default function AppRouter() {
   const { user } = useAuth()
@@ -44,6 +45,11 @@ export default function AppRouter() {
       <Route path="/purchase-orders" element={
         <ProtectedRoute roles={['ADMIN', 'SUPPLIER_MANAGER']}>
           <PurchaseOrdersPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/users" element={
+        <ProtectedRoute roles={['ADMIN']}>
+          <UsersPage />
         </ProtectedRoute>
       } />
       <Route path="*" element={<Navigate to="/" />} />
