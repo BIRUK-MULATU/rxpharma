@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import DashboardLayout from '../../components/layout/DashboardLayout'
 import { userApi } from '../../api/userApi'
 import { useAuth } from '../../context/AuthContext'
+import { authApi } from '../../api/authApi'
 
 const Badge = ({ children, color }) => {
   const colors = {
@@ -20,6 +21,7 @@ const roleColor = (role) => {
   return 'orange'
 }
 
+
 export default function UsersPage() {
   const { user: currentUser } = useAuth()
   const [users, setUsers] = useState([])
@@ -32,7 +34,10 @@ export default function UsersPage() {
   const [selectedUser, setSelectedUser] = useState(null)
   const [newRole, setNewRole] = useState('')
   const [newPassword, setNewPassword] = useState('')
-
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [createForm, setCreateForm] = useState({
+    fullName: '', email: '', password: '', role: 'PHARMACIST'
+  })
   const fetchUsers = async () => {
     setLoading(true)
     try {
@@ -43,6 +48,20 @@ export default function UsersPage() {
   }
 
   useEffect(() => { fetchUsers() }, [])
+
+  const handleCreateUser = async (e) => {
+  e.preventDefault()
+  setError('')
+  try {
+    await authApi.register(createForm)
+    setSuccess('User created successfully')
+    setShowCreateModal(false)
+    setCreateForm({ fullName: '', email: '', password: '', role: 'PHARMACIST' })
+    fetchUsers()
+  } catch (err) {
+    setError(err.response?.data?.message || 'Failed to create user')
+  }
+}
 
   const handleUpdateRole = async (e) => {
     e.preventDefault()
@@ -187,6 +206,13 @@ export default function UsersPage() {
                         className="text-xs px-2 py-1 bg-purple-50 text-purple-600 rounded hover:bg-purple-100">
                         Role
                       </button>
+                      <button onClick={() => setShowCreateModal(true)}
+                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/>
+                        </svg>
+                        Add User
+                      </button>
                       <button onClick={() => {
                         setSelectedUser(u)
                         setNewPassword('')
@@ -277,6 +303,57 @@ export default function UsersPage() {
           </div>
         </div>
       )}
+      {showCreateModal && (
+  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+        <h3 className="font-semibold text-gray-900">Create New User</h3>
+        <button onClick={() => setShowCreateModal(false)} className="text-gray-400 hover:text-gray-600">✕</button>
+      </div>
+      <form onSubmit={handleCreateUser} className="p-6 space-y-4">
+        {error && <p className="text-red-600 text-sm bg-red-50 px-3 py-2 rounded-lg">{error}</p>}
+        <div>
+          <label className="block text-xs font-medium text-gray-700 mb-1">Full Name</label>
+          <input required value={createForm.fullName}
+            onChange={e => setCreateForm({...createForm, fullName: e.target.value})}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Abebe Kebede"/>
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-700 mb-1">Email</label>
+          <input required type="email" value={createForm.email}
+            onChange={e => setCreateForm({...createForm, email: e.target.value})}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="abebe@rxpharma.com"/>
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-700 mb-1">Password</label>
+          <input required type="password" value={createForm.password}
+            onChange={e => setCreateForm({...createForm, password: e.target.value})}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Min 8 characters"/>
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-700 mb-1">Role</label>
+          <select value={createForm.role}
+            onChange={e => setCreateForm({...createForm, role: e.target.value})}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <option value="ADMIN">ADMIN</option>
+            <option value="PHARMACIST">PHARMACIST</option>
+            <option value="CASHIER">CASHIER</option>
+            <option value="SUPPLIER_MANAGER">SUPPLIER MANAGER</option>
+          </select>
+        </div>
+        <div className="flex gap-3 pt-2">
+          <button type="button" onClick={() => setShowCreateModal(false)}
+            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
+          <button type="submit"
+            className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium">Create User</button>
+        </div>
+      </form>
+    </div>
+  </div>
+)}
     </DashboardLayout>
   )
 }

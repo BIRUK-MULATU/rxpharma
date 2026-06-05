@@ -141,6 +141,16 @@ export default function PrescriptionsPage() {
       setError(err.response?.data?.message || 'Cancel failed')
     }
   }
+  const handleDelete = async (id) => {
+  if (!confirm('Permanently delete this prescription?')) return
+  try {
+    await prescriptionApi.cancel(id)
+    setSuccess('Prescription deleted')
+    fetchPrescriptions()
+  } catch (err) {
+    setError(err.response?.data?.message || 'Delete failed')
+  }
+}
 
   return (
     <DashboardLayout title="Prescription Management">
@@ -225,6 +235,12 @@ export default function PrescriptionsPage() {
                             className="text-xs px-2 py-1 bg-red-50 text-red-600 rounded hover:bg-red-100">
                             Cancel
                           </button>
+                          {hasRole('ADMIN') && (
+                          <button onClick={() => handleDelete(p.id)}
+                            className="text-xs px-2 py-1 bg-red-50 text-red-600 rounded hover:bg-red-100">
+                            Delete
+                          </button>
+                        )}
                         </>
                       )}
                     </div>

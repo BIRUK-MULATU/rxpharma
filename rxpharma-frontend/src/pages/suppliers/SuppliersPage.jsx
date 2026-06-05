@@ -26,10 +26,11 @@ export default function SuppliersPage() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
-  const [form, setForm] = useState({
-    companyName: '', contactPerson: '',
-    email: '', phone: '', status: 'ACTIVE'
-  })
+const [form, setForm] = useState({
+  companyName: '', contactPerson: '',
+  email: '', phone: '', status: 'ACTIVE',
+  supplierType: 'WHOLESALER', address: ''
+})
 
   const fetchSuppliers = async () => {
     setLoading(true)
@@ -42,25 +43,31 @@ export default function SuppliersPage() {
 
   useEffect(() => { fetchSuppliers() }, [])
 
-  const openCreate = () => {
-    setEditSupplier(null)
-    setForm({ companyName: '', contactPerson: '', email: '', phone: '', status: 'ACTIVE' })
-    setError('')
-    setShowModal(true)
-  }
+const openCreate = () => {
+  setEditSupplier(null)
+  setForm({
+    companyName: '', contactPerson: '', email: '',
+    phone: '', status: 'ACTIVE',
+    supplierType: 'WHOLESALER', address: ''
+  })
+  setError('')
+  setShowModal(true)
+}
 
-  const openEdit = (supplier) => {
-    setEditSupplier(supplier)
-    setForm({
-      companyName: supplier.companyName,
-      contactPerson: supplier.contactPerson,
-      email: supplier.email,
-      phone: supplier.phone,
-      status: supplier.status
-    })
-    setError('')
-    setShowModal(true)
-  }
+const openEdit = (supplier) => {
+  setEditSupplier(supplier)
+  setForm({
+    companyName: supplier.companyName,
+    contactPerson: supplier.contactPerson,
+    email: supplier.email,
+    phone: supplier.phone,
+    status: supplier.status,
+    supplierType: supplier.supplierType || 'WHOLESALER',
+    address: supplier.address || ''
+  })
+  setError('')
+  setShowModal(true)
+}
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -138,6 +145,7 @@ export default function SuppliersPage() {
 
       {/* Cards Grid */}
       {loading ? (
+        
         <div className="flex items-center justify-center h-48">
           <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"/>
         </div>
@@ -208,6 +216,7 @@ export default function SuppliersPage() {
               </h3>
               <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600">✕</button>
             </div>
+            
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               {error && <p className="text-red-600 text-sm bg-red-50 px-3 py-2 rounded-lg">{error}</p>}
               <div>
@@ -238,6 +247,24 @@ export default function SuppliersPage() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="+251911234567"/>
               </div>
+              <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Supplier Type</label>
+                  <select value={form.supplierType}
+                    onChange={e => setForm({...form, supplierType: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="WHOLESALER">Wholesaler</option>
+                    <option value="IMPORTER">Importer</option>
+                  </select>
+                  
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Location / Address</label>
+                  <input value={form.address}
+                    onChange={e => setForm({...form, address: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Addis Ababa, Bole Sub City"/>
+                    
+                </div>
               {editSupplier && (
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">Status</label>
