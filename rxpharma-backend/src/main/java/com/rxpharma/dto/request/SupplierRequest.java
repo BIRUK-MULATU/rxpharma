@@ -22,4 +22,8 @@ public class SupplierRequest {
     private String phone;
 
     private Supplier.Status status;
+
+    private Supplier.SupplierType supplierType;
+
+    private String address;
 }
