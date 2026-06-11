@@ -22,10 +22,25 @@ public class SupplierController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN','SUPPLIER_MANAGER','PHARMACIST')")
-    public ResponseEntity<List<SupplierResponse>> getAllSuppliers() {
-        List<SupplierResponse> suppliers = supplierService.getAllSuppliers()
-                .stream().map(this::toResponse).collect(Collectors.toList());
-        return ResponseEntity.ok(suppliers);
+    public ResponseEntity<List<SupplierResponse>> getAllSuppliers(
+            @RequestParam(required = false) String type) {
+
+        List<Supplier> suppliers;
+        if (type != null && !type.isBlank()) {
+            try {
+                Supplier.SupplierType supplierType = Supplier.SupplierType.valueOf(type.toUpperCase());
+                suppliers = supplierService.getSuppliersByType(supplierType);
+            } catch (IllegalArgumentException e) {
+                suppliers = supplierService.getAllSuppliers();
+            }
+        } else {
+            suppliers = supplierService.getAllSuppliers();
+        }
+
+        List<SupplierResponse> response = suppliers.stream()
+                .map(this::toResponse)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/{id}")
@@ -37,10 +52,7 @@ public class SupplierController {
     @PostMapping
     @PreAuthorize("hasAnyRole('ADMIN','SUPPLIER_MANAGER')")
     public ResponseEntity<SupplierResponse> createSupplier(@Valid @RequestBody SupplierRequest request) {
-        Supplier supplier = supplierService.createSupplier(
-                request.getCompanyName(), request.getContactPerson(),
-                request.getEmail(), request.getPhone()
-        );
+        Supplier supplier = supplierService.createSupplier(request);
         return ResponseEntity.ok(toResponse(supplier));
     }
 
@@ -48,10 +60,7 @@ public class SupplierController {
     @PreAuthorize("hasAnyRole('ADMIN','SUPPLIER_MANAGER')")
     public ResponseEntity<SupplierResponse> updateSupplier(@PathVariable Long id,
                                                            @Valid @RequestBody SupplierRequest request) {
-        Supplier supplier = supplierService.updateSupplier(
-                id, request.getCompanyName(), request.getContactPerson(),
-                request.getEmail(), request.getPhone(), request.getStatus()
-        );
+        Supplier supplier = supplierService.updateSupplier(id, request);
         return ResponseEntity.ok(toResponse(supplier));
     }
 
@@ -70,6 +79,9 @@ public class SupplierController {
                 .email(supplier.getEmail())
                 .phone(supplier.getPhone())
                 .status(supplier.getStatus().name())
+                .supplierType(supplier.getSupplierType() != null
+                        ? supplier.getSupplierType().name() : "WHOLESALER")
+                .address(supplier.getAddress())
                 .createdAt(supplier.getCreatedAt())
                 .build();
     }
