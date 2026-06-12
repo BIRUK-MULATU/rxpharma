@@ -6,7 +6,8 @@ import { AuthProvider } from './context/AuthContext'
 import App from './App.jsx'
 import './index.css'
 
-const GOOGLE_CLIENT_ID = '391385140157-h28t759ft80a25p4vgktdm6qo37q2p94.apps.googleusercontent.com'
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '391385140157-h28t759ft80a25p4vgktdm6qo37q2p94.apps.googleusercontent.com'
+
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
