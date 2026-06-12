@@ -9,6 +9,8 @@ const Badge = ({ children, color }) => {
     green: 'bg-green-100 text-green-700',
     blue: 'bg-blue-100 text-blue-700',
     purple: 'bg-purple-100 text-purple-700',
+    teal: 'bg-teal-100 text-teal-700',
+    orange: 'bg-orange-100 text-orange-700',
   }
   return <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${colors[color]}`}>{children}</span>
 }
@@ -33,6 +35,9 @@ export default function SalesPage() {
   const [selectedSale, setSelectedSale] = useState(null)
   const [invoice, setInvoice] = useState(null)
   const [drugs, setDrugs] = useState([])
+
+  // Fix 3 & 4: track which sale IDs have already had their invoice generated
+  const [generatedInvoices, setGeneratedInvoices] = useState({})
 
   const [saleItems, setSaleItems] = useState([{ drugId: '', quantity: 1 }])
   const [saleForm, setSaleForm] = useState({
@@ -74,14 +79,14 @@ export default function SalesPage() {
       const res = await saleApi.getInvoice(sale.id)
       setInvoice(res.data)
       setSelectedSale(sale)
+      // Fix 3 & 4: mark this sale's invoice as generated
+      setGeneratedInvoices(prev => ({ ...prev, [sale.id]: true }))
       setShowInvoice(true)
     } catch { setError('Failed to load invoice') }
   }
 
   const addItem = () => setSaleItems([...saleItems, { drugId: '', quantity: 1 }])
-
   const removeItem = (i) => setSaleItems(saleItems.filter((_, idx) => idx !== i))
-
   const updateItem = (i, field, value) => {
     const updated = [...saleItems]
     updated[i][field] = value
@@ -96,7 +101,6 @@ export default function SalesPage() {
   const calcSubtotal = () => saleItems.reduce((sum, item) => {
     return sum + (getDrugPrice(item.drugId) * (parseInt(item.quantity) || 0))
   }, 0)
-
   const calcTax = () => calcSubtotal() * 0.15
   const calcTotal = () => calcSubtotal() + calcTax()
 
@@ -109,8 +113,8 @@ export default function SalesPage() {
       return
     }
     try {
-      await saleApi.create({
-        cashierId: user?.id || 3,
+      const res = await saleApi.create({
+        cashierId: user?.id,
         patientName: saleForm.patientName,
         paymentMethod: saleForm.paymentMethod,
         items: validItems.map(i => ({
@@ -123,6 +127,12 @@ export default function SalesPage() {
       setSaleItems([{ drugId: '', quantity: 1 }])
       setSaleForm({ patientName: '', paymentMethod: 'CASH' })
       fetchSales()
+      // Automatically open the invoice after creating the sale
+      const invoiceRes = await saleApi.getInvoice(res.data.id)
+      setInvoice(invoiceRes.data)
+      setSelectedSale(res.data)
+      setGeneratedInvoices(prev => ({ ...prev, [res.data.id]: true }))
+      setShowInvoice(true)
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to create sale')
     }
@@ -148,7 +158,7 @@ export default function SalesPage() {
           <p className="text-sm text-gray-500">Point of Sale & Invoice Management</p>
         </div>
         <button onClick={() => setShowNewSale(true)}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+          className="flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/>
           </svg>
@@ -160,7 +170,7 @@ export default function SalesPage() {
       <div className="mb-6">
         <input type="text" placeholder="Search by patient name..."
           value={search} onChange={e => setSearch(e.target.value)}
-          className="w-full sm:w-96 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+          className="w-full sm:w-96 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"/>
       </div>
 
       {/* Table */}
@@ -181,7 +191,7 @@ export default function SalesPage() {
                 <tr><td colSpan={9} className="px-4 py-8 text-center text-gray-400">No sales found</td></tr>
               ) : sales.map(sale => (
                 <tr key={sale.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-4 py-3 font-mono text-xs text-blue-600 font-medium">{sale.invoiceNumber}</td>
+                  <td className="px-4 py-3 font-mono text-xs text-teal-700 font-medium">{sale.invoiceNumber}</td>
                   <td className="px-4 py-3 font-medium text-gray-900">{sale.patientName}</td>
                   <td className="px-4 py-3 text-gray-500">{sale.cashierName || '—'}</td>
                   <td className="px-4 py-3">
@@ -200,10 +210,18 @@ export default function SalesPage() {
                     {new Date(sale.saleDate).toLocaleDateString()}
                   </td>
                   <td className="px-4 py-3">
-                    <button onClick={() => viewInvoice(sale)}
-                      className="text-xs px-2 py-1 bg-blue-50 text-blue-600 rounded hover:bg-blue-100">
-                      Invoice
-                    </button>
+                    {/* Fix 3 & 4: show "View Receipt" if already generated, else "Invoice" */}
+                    {generatedInvoices[sale.id] ? (
+                      <button onClick={() => viewInvoice(sale)}
+                        className="text-xs px-2 py-1 bg-teal-50 text-teal-700 rounded hover:bg-teal-100 font-medium">
+                        View Receipt
+                      </button>
+                    ) : (
+                      <button onClick={() => viewInvoice(sale)}
+                        className="text-xs px-2 py-1 bg-blue-50 text-blue-600 rounded hover:bg-blue-100">
+                        Invoice
+                      </button>
+                    )}
                   </td>
                 </tr>
               ))}
@@ -239,14 +257,14 @@ export default function SalesPage() {
                   <label className="block text-xs font-medium text-gray-700 mb-1">Patient Name</label>
                   <input required value={saleForm.patientName}
                     onChange={e => setSaleForm({...saleForm, patientName: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
                     placeholder="Abebe Girma"/>
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">Payment Method</label>
                   <select value={saleForm.paymentMethod}
                     onChange={e => setSaleForm({...saleForm, paymentMethod: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
                     <option value="CASH">Cash</option>
                     <option value="CARD">Card</option>
                     <option value="MOBILE_MONEY">Mobile Money</option>
@@ -259,14 +277,14 @@ export default function SalesPage() {
                 <div className="flex items-center justify-between mb-2">
                   <label className="text-xs font-medium text-gray-700">Drug Items</label>
                   <button type="button" onClick={addItem}
-                    className="text-xs text-blue-600 hover:underline">+ Add Item</button>
+                    className="text-xs text-teal-600 hover:underline">+ Add Item</button>
                 </div>
                 <div className="space-y-2">
                   {saleItems.map((item, i) => (
                     <div key={i} className="flex items-center gap-2">
                       <select value={item.drugId}
                         onChange={e => updateItem(i, 'drugId', e.target.value)}
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
                         <option value="">Select drug</option>
                         {drugs.map(d => (
                           <option key={d.id} value={d.id}>
@@ -276,7 +294,7 @@ export default function SalesPage() {
                       </select>
                       <input type="number" min="1" value={item.quantity}
                         onChange={e => updateItem(i, 'quantity', e.target.value)}
-                        className="w-20 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-20 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
                         placeholder="Qty"/>
                       <span className="text-sm text-gray-500 w-24 text-right">
                         ETB {(getDrugPrice(item.drugId) * (parseInt(item.quantity) || 0)).toFixed(2)}
@@ -291,7 +309,7 @@ export default function SalesPage() {
               </div>
 
               {/* Totals */}
-              <div className="bg-gray-50 rounded-xl p-4 space-y-2">
+              <div className="bg-teal-50 rounded-xl p-4 space-y-2 border border-teal-100">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Subtotal</span>
                   <span className="font-medium">ETB {calcSubtotal().toFixed(2)}</span>
@@ -300,9 +318,9 @@ export default function SalesPage() {
                   <span className="text-gray-500">Tax (15%)</span>
                   <span className="font-medium">ETB {calcTax().toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between text-base font-bold border-t border-gray-200 pt-2">
+                <div className="flex justify-between text-base font-bold border-t border-teal-200 pt-2">
                   <span>Total</span>
-                  <span className="text-blue-600">ETB {calcTotal().toFixed(2)}</span>
+                  <span className="text-teal-700">ETB {calcTotal().toFixed(2)}</span>
                 </div>
               </div>
 
@@ -310,8 +328,8 @@ export default function SalesPage() {
                 <button type="button" onClick={() => setShowNewSale(false)}
                   className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
                 <button type="submit"
-                  className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium">
-                  Complete Sale
+                  className="flex-1 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-sm font-medium">
+                  Complete Sale & Generate Receipt
                 </button>
               </div>
             </form>
@@ -319,68 +337,110 @@ export default function SalesPage() {
         </div>
       )}
 
-      {/* Invoice Modal */}
+      {/* Invoice / Receipt Modal — Fix 5: professional pharmacy colors */}
       {showInvoice && invoice && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-              <h3 className="font-semibold text-gray-900">Invoice</h3>
-              <button onClick={() => setShowInvoice(false)} className="text-gray-400 hover:text-gray-600">✕</button>
-            </div>
-            <div className="p-6">
-              {/* Invoice Header */}
-              <div className="text-center mb-6">
-                <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center mx-auto mb-2">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
-                  </svg>
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+
+            {/* Fix 5: colored header bar */}
+            <div className="bg-gradient-to-r from-teal-700 to-teal-500 px-6 py-5 text-white">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
+                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <h2 className="font-bold text-lg">RxPharma</h2>
+                    <p className="text-teal-100 text-xs">Official Pharmacy Receipt</p>
+                  </div>
                 </div>
-                <h2 className="font-bold text-gray-900">RxPharma</h2>
-                <p className="text-xs text-gray-400">Pharmacy Receipt</p>
-                <p className="font-mono text-sm text-blue-600 mt-1">{invoice.invoiceNumber}</p>
+                <button onClick={() => setShowInvoice(false)}
+                  className="text-white text-opacity-70 hover:text-opacity-100 text-xl">✕</button>
               </div>
 
-              {/* Info */}
-              <div className="grid grid-cols-2 gap-2 text-xs mb-4">
-                <div><p className="text-gray-400">Patient</p><p className="font-medium">{invoice.patientName}</p></div>
-                <div><p className="text-gray-400">Cashier</p><p className="font-medium">{invoice.cashierName}</p></div>
-                <div><p className="text-gray-400">Payment</p><p className="font-medium">{invoice.paymentMethod}</p></div>
-                <div><p className="text-gray-400">Date</p><p className="font-medium">{new Date(invoice.saleDate).toLocaleDateString()}</p></div>
+              {/* Fix 5: invoice number + PAID status badge */}
+              <div className="mt-4 flex items-center justify-between">
+                <div>
+                  <p className="text-teal-200 text-xs">Invoice Number</p>
+                  <p className="font-mono font-bold text-white">{invoice.invoiceNumber}</p>
+                </div>
+                <div className="flex flex-col items-end gap-1">
+                  <span className="bg-green-400 text-green-900 text-xs font-bold px-3 py-1 rounded-full">
+                    ✓ PAID
+                  </span>
+                  <span className="bg-white bg-opacity-20 text-white text-xs px-3 py-1 rounded-full">
+                    {invoice.paymentMethod}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6">
+              {/* Info Grid */}
+              <div className="grid grid-cols-2 gap-3 text-xs mb-5">
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <p className="text-gray-400 mb-0.5">Patient</p>
+                  <p className="font-semibold text-gray-800">{invoice.patientName}</p>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <p className="text-gray-400 mb-0.5">Cashier</p>
+                  <p className="font-semibold text-gray-800">{invoice.cashierName}</p>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-3 col-span-2">
+                  <p className="text-gray-400 mb-0.5">Date & Time</p>
+                  <p className="font-semibold text-gray-800">
+                    {new Date(invoice.saleDate).toLocaleString()}
+                  </p>
+                </div>
               </div>
 
               {/* Items */}
-              <div className="border-t border-dashed border-gray-200 py-3 mb-3">
-                <p className="text-xs font-semibold text-gray-500 uppercase mb-2">Items</p>
-                <div className="space-y-2">
+              <div className="border border-dashed border-teal-200 rounded-xl p-4 mb-4">
+                <p className="text-xs font-bold text-teal-700 uppercase mb-3 tracking-wider">Dispensed Items</p>
+                <div className="space-y-3">
                   {invoice.items?.map(item => (
-                    <div key={item.id} className="flex justify-between text-sm">
+                    <div key={item.id} className="flex items-center justify-between">
                       <div>
-                        <p className="font-medium text-gray-900">{item.drugName}</p>
-                        <p className="text-xs text-gray-400">×{item.quantity} @ ETB {item.unitPrice}</p>
+                        <p className="text-sm font-medium text-gray-900">{item.drugName}</p>
+                        <p className="text-xs text-gray-400">×{item.quantity} @ ETB {parseFloat(item.unitPrice).toFixed(2)}</p>
                       </div>
-                      <p className="font-medium">ETB {parseFloat(item.subtotal).toFixed(2)}</p>
+                      <p className="text-sm font-semibold text-gray-800">
+                        ETB {parseFloat(item.subtotal).toFixed(2)}
+                      </p>
                     </div>
                   ))}
                 </div>
               </div>
 
               {/* Totals */}
-              <div className="border-t border-dashed border-gray-200 pt-3 space-y-1">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Subtotal</span>
+              <div className="space-y-2 mb-5">
+                <div className="flex justify-between text-sm text-gray-500">
+                  <span>Subtotal</span>
                   <span>ETB {parseFloat(invoice.subtotal).toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Tax (15%)</span>
+                <div className="flex justify-between text-sm text-gray-500">
+                  <span>Tax (15%)</span>
                   <span>ETB {parseFloat(invoice.taxAmount).toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between font-bold text-base pt-1 border-t border-gray-200">
-                  <span>Total</span>
-                  <span className="text-blue-600">ETB {parseFloat(invoice.totalAmount).toFixed(2)}</span>
+                <div className="flex justify-between text-base font-bold pt-2 border-t-2 border-teal-500 text-teal-700">
+                  <span>Total Paid</span>
+                  <span>ETB {parseFloat(invoice.totalAmount).toFixed(2)}</span>
                 </div>
               </div>
 
-              <p className="text-center text-xs text-gray-400 mt-4">Thank you for your visit!</p>
+              {/* Footer */}
+              <div className="bg-teal-50 rounded-xl p-3 text-center border border-teal-100">
+                <p className="text-xs text-teal-700 font-medium">Thank you for choosing RxPharma</p>
+                <p className="text-xs text-teal-500 mt-0.5">Keep this receipt for your records</p>
+              </div>
+
+              {/* Fix 3 & 4: only show View Receipt button — no re-generate option */}
+              <button onClick={() => setShowInvoice(false)}
+                className="mt-4 w-full px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-sm font-medium">
+                Close Receipt
+              </button>
             </div>
           </div>
         </div>

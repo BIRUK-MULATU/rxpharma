@@ -20,8 +20,19 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => {
     const response = await authApi.login({ email, password })
-    const { token, id, email: userEmail, role } = response.data
-    const userData = { id, email: userEmail, role }
+    const { token, id, email: userEmail, fullName, role } = response.data
+    const userData = { id, email: userEmail, fullName, role }
+    localStorage.setItem('token', token)
+    localStorage.setItem('user', JSON.stringify(userData))
+    setToken(token)
+    setUser(userData)
+    return userData
+  }
+
+  const loginWithGoogle = async (credential) => {
+    const response = await authApi.googleLogin(credential)
+    const { token, id, email, fullName, role } = response.data
+    const userData = { id, email, fullName, role }
     localStorage.setItem('token', token)
     localStorage.setItem('user', JSON.stringify(userData))
     setToken(token)
@@ -46,7 +57,7 @@ export function AuthProvider({ children }) {
   return (
     <AuthContext.Provider value={{
       user, token, loading,
-      login, logout,
+      login, loginWithGoogle, logout,
       isAdmin, isPharmacist, isCashier, isSupplierManager, hasRole
     }}>
       {children}

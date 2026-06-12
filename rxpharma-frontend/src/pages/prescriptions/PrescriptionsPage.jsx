@@ -121,7 +121,7 @@ export default function PrescriptionsPage() {
   const handleDispense = async (id) => {
     if (!confirm('Dispense this prescription? Stock will be deducted.')) return
     try {
-      await prescriptionApi.dispense(id, user.id || 2)
+      await prescriptionApi.dispense(id)
       setSuccess('Prescription dispensed successfully')
       setShowDetailModal(false)
       fetchPrescriptions()

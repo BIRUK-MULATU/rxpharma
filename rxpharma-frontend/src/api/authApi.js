@@ -7,4 +7,5 @@ export const authApi = {
   forgotPassword: (data) => api.post('/api/auth/forgot-password', data),
   verifyResetToken: (data) => api.post('/api/auth/verify-reset-token', data),
   resetPassword: (data) => api.post('/api/auth/reset-password', data),
+  googleLogin: (credential) => api.post('/api/auth/google', { credential }),
 }

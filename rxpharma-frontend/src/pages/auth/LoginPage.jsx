@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { GoogleLogin } from '@react-oauth/google'
+import { authApi } from '../../api/authApi'
 
 export default function LoginPage() {
   const navigate = useNavigate()
-  const { login } = useAuth()
+  const { login, loginWithGoogle } = useAuth()
   const [form, setForm] = useState({ email: '', password: '' })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -18,6 +20,19 @@ export default function LoginPage() {
       navigate('/dashboard')
     } catch (err) {
       setError(err.response?.data?.message || 'Invalid email or password')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setError('')
+    setLoading(true)
+    try {
+      await loginWithGoogle(credentialResponse.credential)
+      navigate('/dashboard')
+    } catch (err) {
+      setError(err.response?.data?.message || 'Google sign-in failed')
     } finally {
       setLoading(false)
     }
@@ -102,18 +117,34 @@ export default function LoginPage() {
           </button>
         </form>
 
+        {/* Divider */}
+        <div className="flex items-center gap-3 my-5">
+          <div className="flex-1 h-px bg-gray-200"/>
+          <span className="text-xs text-gray-400">or continue with</span>
+          <div className="flex-1 h-px bg-gray-200"/>
+        </div>
+
+        {/* Google Login Button */}
+        <div className="flex justify-center">
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={() => setError('Google sign-in was cancelled or failed')}
+            theme="outline"
+            size="large"
+            width="368"
+            text="signin_with_google"
+            shape="rectangular"
+          />
+        </div>
+
         {/* Role hint */}
         <div className="mt-6 p-4 bg-gray-50 rounded-lg">
           <p className="text-xs text-gray-500 font-medium mb-2">Test Accounts:</p>
           <div className="grid grid-cols-2 gap-1 text-xs text-gray-400">
-            <span>admin@rxpharma.com</span>
-            <span>Admin@1234</span>
-            <span>pharmacist@rxpharma.com</span>
-            <span>hi</span>
-            <span>cashier@rxpharma.com</span>
-            <span>Cashier@1234</span>
-            <span>supplier@rxpharma.com</span>
-            <span>Supplier@1234</span>
+            <span>admin@rxpharma.com</span><span>Admin@1234</span>
+            <span>pharmacist@rxpharma.com</span><span>hi</span>
+            <span>cashier@rxpharma.com</span><span>Cashier@1234</span>
+            <span>supplier@rxpharma.com</span><span>Supplier@1234</span>
           </div>
         </div>
       </div>
