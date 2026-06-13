@@ -2,7 +2,7 @@
 FROM node:20-alpine AS build
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci
+RUN npm ci --prefer-offline
 COPY . .
 RUN npm run build
 ARG VITE_API_URL
