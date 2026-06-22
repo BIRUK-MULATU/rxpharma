@@ -24,7 +24,6 @@ public class DrugRequest {
     private int stockQty;
 
     @NotNull(message = "Expiry date is required")
-    @Future(message = "Expiry date must be in the future")
     private LocalDate expiryDate;
 
     private Long supplierId;

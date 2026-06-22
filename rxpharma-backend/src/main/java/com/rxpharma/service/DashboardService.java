@@ -29,7 +29,7 @@ public class DashboardService {
 
         long expiringSoonCount = drugRepository.findAll()
                 .stream()
-                .filter(d -> d.getExpiryDate().isBefore(LocalDate.now().plusDays(30)))
+                .filter(d -> d.getExpiryDate() != null && d.getExpiryDate().isBefore(LocalDate.now().plusDays(30)))
                 .count();
 
         long pendingPrescriptions = prescriptionRepository

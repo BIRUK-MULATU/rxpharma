@@ -83,14 +83,14 @@ public class DrugService {
         LocalDate cutoff = LocalDate.now().plusDays(days);
         return drugRepository.findAll()
                 .stream()
-                .filter(d -> d.getExpiryDate().isBefore(cutoff))
+                .filter(d -> d.getExpiryDate() != null && d.getExpiryDate().isBefore(cutoff))
                 .collect(Collectors.toList());
     }
 
     public List<Drug> getExpiredDrugs() {
         return drugRepository.findAll()
                 .stream()
-                .filter(d -> d.getExpiryDate().isBefore(LocalDate.now()))
+                .filter(d -> d.getExpiryDate() != null && d.getExpiryDate().isBefore(LocalDate.now()))
                 .collect(Collectors.toList());
     }
     public Drug adjustStock(Long id, int quantity,
