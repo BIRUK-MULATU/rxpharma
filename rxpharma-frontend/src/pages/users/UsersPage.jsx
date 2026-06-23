@@ -10,6 +10,7 @@ const Badge = ({ children, color }) => {
     green: 'bg-green-100 text-green-700',
     blue: 'bg-blue-100 text-blue-700',
     orange: 'bg-orange-100 text-orange-700',
+    yellow: 'bg-yellow-100 text-yellow-700',
   }
   return <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${colors[color]}`}>{children}</span>
 }
@@ -21,10 +22,10 @@ const roleColor = (role) => {
   return 'orange'
 }
 
-
 export default function UsersPage() {
   const { user: currentUser } = useAuth()
   const [users, setUsers] = useState([])
+  const [pendingUsers, setPendingUsers] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [error, setError] = useState('')
@@ -38,6 +39,7 @@ export default function UsersPage() {
   const [createForm, setCreateForm] = useState({
     fullName: '', email: '', password: '', role: 'PHARMACIST'
   })
+
   const fetchUsers = async () => {
     setLoading(true)
     try {
@@ -47,21 +49,43 @@ export default function UsersPage() {
     finally { setLoading(false) }
   }
 
-  useEffect(() => { fetchUsers() }, [])
+  const fetchPending = async () => {
+    try {
+      const res = await userApi.getPending()
+      setPendingUsers(res.data)
+    } catch { /* silently ignore — non-admins or no pending endpoint */ }
+  }
+
+  useEffect(() => {
+    fetchUsers()
+    fetchPending()
+  }, [])
+
+  const handleApprove = async (id) => {
+    setError('')
+    try {
+      await userApi.approve(id)
+      setSuccess('User approved — they can now sign in')
+      fetchPending()
+      fetchUsers()
+    } catch (err) {
+      setError(err.response?.data?.message || 'Approval failed')
+    }
+  }
 
   const handleCreateUser = async (e) => {
-  e.preventDefault()
-  setError('')
-  try {
-    await authApi.register(createForm)
-    setSuccess('User created successfully')
-    setShowCreateModal(false)
-    setCreateForm({ fullName: '', email: '', password: '', role: 'PHARMACIST' })
-    fetchUsers()
-  } catch (err) {
-    setError(err.response?.data?.message || 'Failed to create user')
+    e.preventDefault()
+    setError('')
+    try {
+      await authApi.register(createForm)
+      setSuccess('User created successfully')
+      setShowCreateModal(false)
+      setCreateForm({ fullName: '', email: '', password: '', role: 'PHARMACIST' })
+      fetchUsers()
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to create user')
+    }
   }
-}
 
   const handleUpdateRole = async (e) => {
     e.preventDefault()
@@ -134,7 +158,49 @@ export default function UsersPage() {
           <h2 className="text-xl font-bold text-gray-900">Users</h2>
           <p className="text-sm text-gray-500">{users.length} total system users</p>
         </div>
+        <button onClick={() => setShowCreateModal(true)}
+          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/>
+          </svg>
+          Add User
+        </button>
       </div>
+
+      {/* Pending Approvals Section */}
+      {pendingUsers.length > 0 && (
+        <div className="mb-6 bg-yellow-50 border-2 border-yellow-200 rounded-2xl p-5">
+          <div className="flex items-center gap-2 mb-4">
+            <svg className="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <h3 className="font-semibold text-gray-900">
+              Pending Approvals <Badge color="yellow">{pendingUsers.length}</Badge>
+            </h3>
+          </div>
+          <div className="space-y-2">
+            {pendingUsers.map(u => (
+              <div key={u.id} className="flex items-center justify-between bg-white rounded-xl px-4 py-3 border border-yellow-100">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 bg-yellow-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-yellow-700 font-semibold text-xs">
+                      {u.email?.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900 text-sm">{u.fullName || u.email}</p>
+                    <p className="text-xs text-gray-400">{u.email} · Signed up via {u.authProvider || 'GOOGLE'}</p>
+                  </div>
+                </div>
+                <button onClick={() => handleApprove(u.id)}
+                  className="text-xs px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium">
+                  Approve
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Role Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -205,13 +271,6 @@ export default function UsersPage() {
                       }}
                         className="text-xs px-2 py-1 bg-purple-50 text-purple-600 rounded hover:bg-purple-100">
                         Role
-                      </button>
-                      <button onClick={() => setShowCreateModal(true)}
-                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/>
-                        </svg>
-                        Add User
                       </button>
                       <button onClick={() => {
                         setSelectedUser(u)
@@ -303,57 +362,59 @@ export default function UsersPage() {
           </div>
         </div>
       )}
+
+      {/* Create User Modal */}
       {showCreateModal && (
-  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
-      <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-        <h3 className="font-semibold text-gray-900">Create New User</h3>
-        <button onClick={() => setShowCreateModal(false)} className="text-gray-400 hover:text-gray-600">✕</button>
-      </div>
-      <form onSubmit={handleCreateUser} className="p-6 space-y-4">
-        {error && <p className="text-red-600 text-sm bg-red-50 px-3 py-2 rounded-lg">{error}</p>}
-        <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">Full Name</label>
-          <input required value={createForm.fullName}
-            onChange={e => setCreateForm({...createForm, fullName: e.target.value})}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Abebe Kebede"/>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+              <h3 className="font-semibold text-gray-900">Create New User</h3>
+              <button onClick={() => setShowCreateModal(false)} className="text-gray-400 hover:text-gray-600">✕</button>
+            </div>
+            <form onSubmit={handleCreateUser} className="p-6 space-y-4">
+              {error && <p className="text-red-600 text-sm bg-red-50 px-3 py-2 rounded-lg">{error}</p>}
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Full Name</label>
+                <input required value={createForm.fullName}
+                  onChange={e => setCreateForm({...createForm, fullName: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Abebe Kebede"/>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Email</label>
+                <input required type="email" value={createForm.email}
+                  onChange={e => setCreateForm({...createForm, email: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="abebe@rxpharma.com"/>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Password</label>
+                <input required type="password" value={createForm.password}
+                  onChange={e => setCreateForm({...createForm, password: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Min 8 characters"/>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Role</label>
+                <select value={createForm.role}
+                  onChange={e => setCreateForm({...createForm, role: e.target.value})}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <option value="ADMIN">ADMIN</option>
+                  <option value="PHARMACIST">PHARMACIST</option>
+                  <option value="CASHIER">CASHIER</option>
+                  <option value="SUPPLIER_MANAGER">SUPPLIER MANAGER</option>
+                </select>
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button type="button" onClick={() => setShowCreateModal(false)}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
+                <button type="submit"
+                  className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium">Create User</button>
+              </div>
+            </form>
+          </div>
         </div>
-        <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">Email</label>
-          <input required type="email" value={createForm.email}
-            onChange={e => setCreateForm({...createForm, email: e.target.value})}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="abebe@rxpharma.com"/>
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">Password</label>
-          <input required type="password" value={createForm.password}
-            onChange={e => setCreateForm({...createForm, password: e.target.value})}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Min 8 characters"/>
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-gray-700 mb-1">Role</label>
-          <select value={createForm.role}
-            onChange={e => setCreateForm({...createForm, role: e.target.value})}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <option value="ADMIN">ADMIN</option>
-            <option value="PHARMACIST">PHARMACIST</option>
-            <option value="CASHIER">CASHIER</option>
-            <option value="SUPPLIER_MANAGER">SUPPLIER MANAGER</option>
-          </select>
-        </div>
-        <div className="flex gap-3 pt-2">
-          <button type="button" onClick={() => setShowCreateModal(false)}
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
-          <button type="submit"
-            className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium">Create User</button>
-        </div>
-      </form>
-    </div>
-  </div>
-)}
+      )}
     </DashboardLayout>
   )
 }

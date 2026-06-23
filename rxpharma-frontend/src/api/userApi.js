@@ -8,4 +8,6 @@ export const userApi = {
   changePassword: (id, data) => api.patch(`/api/users/${id}/change-password`, data),
   resetPassword: (id, data) => api.patch(`/api/users/${id}/reset-password`, data),
   delete: (id) => api.delete(`/api/users/${id}`),
+  getPending: () => api.get('/api/users/pending'),
+  approve: (id) => api.patch(`/api/users/${id}/approve`),
 }

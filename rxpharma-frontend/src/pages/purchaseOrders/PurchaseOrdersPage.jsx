@@ -62,10 +62,17 @@ export default function PurchaseOrdersPage() {
 
   useEffect(() => { fetchOrders() }, [page])
 
-  useEffect(() => {
-    supplierApi.getAll().then(res => setSuppliers(res.data)).catch(() => {})
-    drugApi.search({ page: 0, size: 100 }).then(res => setDrugs(res.data.content)).catch(() => {})
-  }, [])
+  // useEffect(() => {
+  //   supplierApi.getAll().then(res => setSuppliers(res.data)).catch(() => {})
+  //   drugApi.search({ page: 0, size: 100 }).then(res => setDrugs(res.data.content)).catch(() => {})
+  // }, [])
+
+      useEffect(() => {
+      supplierApi.getAll().then(res => setSuppliers(res.data)).catch(() => {})
+      drugApi.search({ page: 0, size: 100 })
+        .then(res => setDrugs(res.data.content))
+        .catch(() => setError('Failed to load medicine list — check your permissions'))
+      }, [])
 
   const addItem = () => setOrderItems([...orderItems, { drugId: '', quantity: 1, unitCost: '' }])
   const removeItem = (i) => setOrderItems(orderItems.filter((_, idx) => idx !== i))
