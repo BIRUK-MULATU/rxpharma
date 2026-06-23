@@ -26,7 +26,7 @@ public class DrugController {
     private final DrugService drugService;
 
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN','PHARMACIST','CASHIER')")
+    @PreAuthorize("hasAnyRole('ADMIN','PHARMACIST','CASHIER','SUPPLIER_MANAGER')")
     public ResponseEntity<Page<DrugResponse>> searchDrugs(
             @RequestParam(required = false) String category,
             @RequestParam(required = false) Long supplierId,
@@ -42,7 +42,7 @@ public class DrugController {
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN','PHARMACIST','CASHIER')")
+    @PreAuthorize("hasAnyRole('ADMIN','PHARMACIST','CASHIER','SUPPLIER_MANAGER')")
     public ResponseEntity<DrugResponse> getDrugById(@PathVariable Long id) {
         return ResponseEntity.ok(toResponse(drugService.getDrugById(id)));
     }
