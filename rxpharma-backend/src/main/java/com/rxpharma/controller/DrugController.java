@@ -90,16 +90,7 @@ public class DrugController {
         return ResponseEntity.ok(toResponse(drug));
     }
 
-//    @PutMapping("/{id}")
-//    @PreAuthorize("hasAnyRole('ADMIN','PHARMACIST')")
-//    public ResponseEntity<DrugResponse> updateDrug(@PathVariable Long id,
-//                                                   @RequestBody DrugRequest request) {
-//        Drug drug = drugService.updateDrug(
-//                id, request.getName(), request.getCategory(),
-//                request.getPrice(), request.getStockQty(), request.getExpiryDate()
-//        );
-//        return ResponseEntity.ok(toResponse(drug));
-//    }
+
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN','PHARMACIST')")
     public ResponseEntity<DrugResponse> updateDrug(@PathVariable Long id,
@@ -129,20 +120,7 @@ public class DrugController {
         return ResponseEntity.ok(toResponse(drug));
     }
 
-//    private DrugResponse toResponse(Drug drug) {
-//        return DrugResponse.builder()
-//                .id(drug.getId())
-//                .name(drug.getName())
-//                .sku(drug.getSku())
-//                .category(drug.getCategory())
-//                .price(drug.getPrice())
-//                .stockQty(drug.getStockQty())
-//                .expiryDate(drug.getExpiryDate())
-//                .supplierName(drug.getSupplier() != null ? drug.getSupplier().getCompanyName() : null)
-//                .lowStock(drug.getStockQty() < 10)
-//                .expiringSoon(drug.getExpiryDate().isBefore(LocalDate.now().plusDays(30)))
-//                .build();
-//    }
+
 private DrugResponse toResponse(Drug drug) {
     return DrugResponse.builder()
             .id(drug.getId())
