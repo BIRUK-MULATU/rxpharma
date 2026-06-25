@@ -98,49 +98,50 @@ export default function Sidebar({ isOpen, onClose }) {
   )
 
   const roleColors = {
-    ADMIN: 'bg-purple-100 text-purple-700',
-    PHARMACIST: 'bg-green-100 text-green-700',
-    CASHIER: 'bg-blue-100 text-blue-700',
-    SUPPLIER_MANAGER: 'bg-orange-100 text-orange-700',
+    ADMIN: 'bg-accent-100 text-accent-700',
+    PHARMACIST: 'bg-emerald-100 text-emerald-700',
+    CASHIER: 'bg-sky-100 text-sky-700',
+    SUPPLIER_MANAGER: 'bg-amber-100 text-amber-700',
   }
 
   return (
     <>
       {/* Overlay for mobile */}
       {isOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-20 lg:hidden" onClick={onClose} />
+        <div className="fixed inset-0 bg-black bg-opacity-60 z-20 lg:hidden" onClick={onClose} />
       )}
 
       {/* Sidebar */}
       <aside className={`
-        fixed top-0 left-0 h-full w-64 bg-white border-r border-gray-200
+        fixed top-0 left-0 h-full w-64
+        bg-gradient-to-b from-primary-900 via-primary-700 to-primary-900
         transform transition-transform duration-300 z-30
         ${isOpen ? 'translate-x-0' : '-translate-x-full'}
         lg:translate-x-0 lg:static lg:z-auto
       `}>
         {/* Logo */}
-        <div className="flex items-center gap-3 px-6 py-5 border-b border-gray-100">
-          <div className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center flex-shrink-0">
+        <div className="flex items-center gap-3 px-6 py-5 border-b border-white/10">
+          <div className="w-9 h-9 bg-gradient-to-br from-accent-500 to-accent-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
             <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
             </svg>
           </div>
           <div>
-            <h1 className="font-bold text-gray-900 text-base">RxPharma</h1>
-            <p className="text-xs text-gray-400">Management System</p>
+            <h1 className="font-bold text-white text-base">RxPharma</h1>
+            <p className="text-xs text-white/50">Management System</p>
           </div>
         </div>
 
         {/* User Info */}
-        <div className="px-4 py-4 border-b border-gray-100">
+        <div className="px-4 py-4 border-b border-white/10">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-              <span className="text-blue-600 font-semibold text-sm">
+            <div className="w-9 h-9 bg-gradient-to-br from-accent-500 to-accent-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-md">
+              <span className="text-white font-semibold text-sm">
                 {user?.email?.charAt(0).toUpperCase()}
               </span>
             </div>
             <div className="overflow-hidden">
-              <p className="text-sm font-medium text-gray-900 truncate">{user?.email}</p>
+              <p className="text-sm font-medium text-white/90 truncate">{user?.email}</p>
               <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${roleColors[user?.role]}`}>
                 {user?.role?.replace('_', ' ')}
               </span>
@@ -150,7 +151,7 @@ export default function Sidebar({ isOpen, onClose }) {
 
         {/* Nav Items */}
         <nav className="px-3 py-4 flex-1 overflow-y-auto">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-3 mb-2">
+          <p className="text-xs font-semibold text-white/40 uppercase tracking-wider px-3 mb-2">
             Navigation
           </p>
           <ul className="space-y-1">
@@ -160,10 +161,10 @@ export default function Sidebar({ isOpen, onClose }) {
                   to={item.path}
                   onClick={onClose}
                   className={({ isActive }) =>
-                    `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+                    `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200
                     ${isActive
-                      ? 'bg-blue-50 text-blue-700'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                      ? 'bg-gradient-to-r from-accent-500/20 to-accent-600/10 text-accent-100 shadow-sm border-l-2 border-accent-500'
+                      : 'text-white/60 hover:bg-white/5 hover:text-white/90'
                     }`
                   }
                 >
@@ -176,10 +177,10 @@ export default function Sidebar({ isOpen, onClose }) {
         </nav>
 
         {/* Logout */}
-        <div className="px-3 py-4 border-t border-gray-100">
+        <div className="px-3 py-4 border-t border-white/10">
           <button
             onClick={handleLogout}
-            className="flex items-center gap-3 px-3 py-2.5 w-full rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+            className="flex items-center gap-3 px-3 py-2.5 w-full rounded-lg text-sm font-medium text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-colors"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />

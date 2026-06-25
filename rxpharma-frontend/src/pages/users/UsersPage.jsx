@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import DashboardLayout from '../../components/layout/DashboardLayout'
 import { userApi } from '../../api/userApi'
 import { useAuth } from '../../context/AuthContext'
@@ -7,8 +7,8 @@ import { authApi } from '../../api/authApi'
 const Badge = ({ children, color }) => {
   const colors = {
     purple: 'bg-purple-100 text-purple-700',
-    green: 'bg-green-100 text-green-700',
-    blue: 'bg-blue-100 text-blue-700',
+    green: 'bg-emerald-100 text-emerald-700',
+    blue: 'bg-accent-100 text-accent-600',
     orange: 'bg-orange-100 text-orange-700',
     yellow: 'bg-yellow-100 text-yellow-700',
   }
@@ -40,26 +40,26 @@ export default function UsersPage() {
     fullName: '', email: '', password: '', role: 'PHARMACIST'
   })
 
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     setLoading(true)
     try {
       const res = await userApi.getAll()
       setUsers(res.data)
     } catch { setError('Failed to load users') }
     finally { setLoading(false) }
-  }
+  }, [])
 
-  const fetchPending = async () => {
+  const fetchPending = useCallback(async () => {
     try {
       const res = await userApi.getPending()
       setPendingUsers(res.data)
-    } catch { /* silently ignore — non-admins or no pending endpoint */ }
-  }
+    } catch { /* silently ignore */ }
+  }, [])
 
   useEffect(() => {
     fetchUsers()
     fetchPending()
-  }, [])
+  }, [fetchUsers, fetchPending])
 
   const handleApprove = async (id) => {
     setError('')
@@ -159,7 +159,7 @@ export default function UsersPage() {
           <p className="text-sm text-gray-500">{users.length} total system users</p>
         </div>
         <button onClick={() => setShowCreateModal(true)}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+          className="flex items-center gap-2 bg-gradient-to-r from-accent-600 to-accent-500 hover:from-accent-700 hover:to-accent-600 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-md">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/>
           </svg>
@@ -205,7 +205,7 @@ export default function UsersPage() {
       {/* Role Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {Object.entries(roleStats).map(([role, count]) => (
-          <div key={role} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+          <div key={role} className="bg-white rounded-xl p-4 shadow-sm border border-primary-100">
             <p className="text-2xl font-bold text-gray-900">{count}</p>
             <div className="mt-1">
               <Badge color={roleColor(role)}>{role.replace('_', ' ')}</Badge>
@@ -218,14 +218,14 @@ export default function UsersPage() {
       <div className="mb-6">
         <input type="text" placeholder="Search by email, name or role..."
           value={search} onChange={e => setSearch(e.target.value)}
-          className="w-full sm:w-96 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+          className="w-full sm:w-96 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent-500"/>
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-xl shadow-sm border border-primary-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-100">
+            <thead className="bg-primary-50/50 border-b border-primary-100">
               <tr>
                 {['#', 'User', 'Email', 'Role', 'Joined', 'Actions'].map(h => (
                   <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
@@ -242,15 +242,15 @@ export default function UsersPage() {
                   <td className="px-4 py-3 text-gray-400 text-xs">#{u.id}</td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                        <span className="text-blue-600 font-semibold text-xs">
+                      <div className="w-8 h-8 bg-accent-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <span className="text-accent-600 font-semibold text-xs">
                           {u.email?.charAt(0).toUpperCase()}
                         </span>
                       </div>
                       <div>
                         <p className="font-medium text-gray-900">{u.fullName || '—'}</p>
                         {u.id === currentUser?.id && (
-                          <span className="text-xs text-blue-500">(You)</span>
+                          <span className="text-xs text-accent-500">(You)</span>
                         )}
                       </div>
                     </div>
@@ -269,7 +269,7 @@ export default function UsersPage() {
                         setNewRole(u.role)
                         setShowRoleModal(true)
                       }}
-                        className="text-xs px-2 py-1 bg-purple-50 text-purple-600 rounded hover:bg-purple-100">
+                        className="text-xs px-2 py-1 bg-accent-50 text-accent-600 rounded hover:bg-accent-100">
                         Role
                       </button>
                       <button onClick={() => {
@@ -299,7 +299,7 @@ export default function UsersPage() {
       {showRoleModal && selectedUser && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-primary-100">
               <h3 className="font-semibold text-gray-900">Update Role</h3>
               <button onClick={() => setShowRoleModal(false)} className="text-gray-400 hover:text-gray-600">✕</button>
             </div>
@@ -314,7 +314,7 @@ export default function UsersPage() {
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">New Role</label>
                 <select value={newRole} onChange={e => setNewRole(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent-500">
                   <option value="ADMIN">ADMIN</option>
                   <option value="PHARMACIST">PHARMACIST</option>
                   <option value="CASHIER">CASHIER</option>
@@ -325,7 +325,7 @@ export default function UsersPage() {
                 <button type="button" onClick={() => setShowRoleModal(false)}
                   className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
                 <button type="submit"
-                  className="flex-1 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium">Update Role</button>
+                  className="flex-1 px-4 py-2 bg-gradient-to-r from-accent-600 to-accent-500 hover:from-accent-700 hover:to-accent-600 text-white rounded-lg text-sm font-medium shadow-md">Update Role</button>
               </div>
             </form>
           </div>
@@ -336,7 +336,7 @@ export default function UsersPage() {
       {showPasswordModal && selectedUser && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-primary-100">
               <h3 className="font-semibold text-gray-900">Reset Password</h3>
               <button onClick={() => setShowPasswordModal(false)} className="text-gray-400 hover:text-gray-600">✕</button>
             </div>
@@ -349,7 +349,7 @@ export default function UsersPage() {
                 <label className="block text-xs font-medium text-gray-700 mb-1">New Password</label>
                 <input required type="password" value={newPassword}
                   onChange={e => setNewPassword(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent-500"
                   placeholder="Enter new password"/>
               </div>
               <div className="flex gap-3">
@@ -367,7 +367,7 @@ export default function UsersPage() {
       {showCreateModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-primary-100">
               <h3 className="font-semibold text-gray-900">Create New User</h3>
               <button onClick={() => setShowCreateModal(false)} className="text-gray-400 hover:text-gray-600">✕</button>
             </div>
@@ -377,28 +377,28 @@ export default function UsersPage() {
                 <label className="block text-xs font-medium text-gray-700 mb-1">Full Name</label>
                 <input required value={createForm.fullName}
                   onChange={e => setCreateForm({...createForm, fullName: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent-500"
                   placeholder="Abebe Kebede"/>
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Email</label>
                 <input required type="email" value={createForm.email}
                   onChange={e => setCreateForm({...createForm, email: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent-500"
                   placeholder="abebe@rxpharma.com"/>
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Password</label>
                 <input required type="password" value={createForm.password}
                   onChange={e => setCreateForm({...createForm, password: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent-500"
                   placeholder="Min 8 characters"/>
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Role</label>
                 <select value={createForm.role}
                   onChange={e => setCreateForm({...createForm, role: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent-500">
                   <option value="ADMIN">ADMIN</option>
                   <option value="PHARMACIST">PHARMACIST</option>
                   <option value="CASHIER">CASHIER</option>
@@ -409,7 +409,7 @@ export default function UsersPage() {
                 <button type="button" onClick={() => setShowCreateModal(false)}
                   className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
                 <button type="submit"
-                  className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium">Create User</button>
+                  className="flex-1 px-4 py-2 bg-gradient-to-r from-accent-600 to-accent-500 hover:from-accent-700 hover:to-accent-600 text-white rounded-lg text-sm font-medium shadow-md">Create User</button>
               </div>
             </form>
           </div>
