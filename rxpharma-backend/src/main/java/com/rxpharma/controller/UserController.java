@@ -101,4 +101,14 @@ public class UserController {
                 "userId", updated.getId().toString()
         ));
     }
+
+    // NEW — deny a pending Google sign-up (removes the account)
+    @DeleteMapping("/{id}/deny")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Map<String, String>> denyUser(@PathVariable Long id) {
+        userService.denyUser(id);
+        return ResponseEntity.ok(Map.of(
+                "message", "User registration denied and removed"
+        ));
+    }
 }

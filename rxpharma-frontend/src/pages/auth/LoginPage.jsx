@@ -123,17 +123,19 @@ export default function LoginPage() {
           <div className="flex-1 h-px bg-gray-200"/>
         </div>
 
-        {/* Google Login Button */}
-        <div className="flex justify-center">
-          <GoogleLogin
-            onSuccess={handleGoogleSuccess}
-            onError={() => setError('Google sign-in was cancelled or failed')}
-            theme="outline"
-            size="large"
-            width="368"
-            text="signin_with_google"
-            shape="rectangular"
-          />
+            {/* Google Login Button */}
+        <div className="flex justify-center w-full overflow-hidden">
+          <div className="w-full max-w-full [&>div]:!w-full [&_iframe]:!w-full">
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={() => setError('Google sign-in was cancelled or failed')}
+              theme="outline"
+              size="large"
+              text="signin_with_google"
+              shape="rectangular"
+              width="100%"
+            />
+          </div>
         </div>
 
       </div>

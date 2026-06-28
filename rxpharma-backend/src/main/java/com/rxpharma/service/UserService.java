@@ -83,6 +83,16 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    // NEW — deny/reject a pending sign-up — removes the account entirely
+    public void denyUser(Long id) {
+        User user = getUserById(id);
+        if (user.isApproved()) {
+            throw new com.rxpharma.exception.BadRequestException(
+                    "Cannot deny a user that is already approved");
+        }
+        userRepository.delete(user);
+    }
+
     // NEW — list all users awaiting admin approval
     public List<User> getPendingUsers() {
         return userRepository.findByApprovedFalse();

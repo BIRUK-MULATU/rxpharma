@@ -35,9 +35,9 @@ export default function Navbar({ onMenuClick, title }) {
           )}
         </button>
 
-        <div className="text-xs text-primary-300 dark:text-primary-500 hidden sm:block">
+        {/* <div className="text-xs text-primary-300 dark:text-primary-500 hidden sm:block">
           Backend: <span className="text-emerald-500 font-medium">● Online</span>
-        </div>
+        </div> */}
       </div>
     </header>
   )

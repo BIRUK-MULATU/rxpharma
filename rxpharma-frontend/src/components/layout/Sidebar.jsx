@@ -137,11 +137,12 @@ export default function Sidebar({ isOpen, onClose }) {
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 bg-gradient-to-br from-accent-500 to-accent-600 rounded-full flex items-center justify-center flex-shrink-0 shadow-md">
               <span className="text-white font-semibold text-sm">
-                {user?.email?.charAt(0).toUpperCase()}
+                {(user?.fullName || user?.email)?.charAt(0).toUpperCase()}
               </span>
             </div>
-            <div className="overflow-hidden">
-              <p className="text-sm font-medium text-white/90 truncate">{user?.email}</p>
+              <div className="overflow-hidden">
+              <p className="text-sm font-medium text-white/90 truncate">{user?.fullName || user?.email}</p>
+              <p className="text-xs text-white/40 truncate">{user?.email}</p>
               <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${roleColors[user?.role]}`}>
                 {user?.role?.replace('_', ' ')}
               </span>

@@ -61,7 +61,7 @@ export default function UsersPage() {
     fetchPending()
   }, [fetchUsers, fetchPending])
 
-  const handleApprove = async (id) => {
+const handleApprove = async (id) => {
     setError('')
     try {
       await userApi.approve(id)
@@ -70,6 +70,18 @@ export default function UsersPage() {
       fetchUsers()
     } catch (err) {
       setError(err.response?.data?.message || 'Approval failed')
+    }
+  }
+
+  const handleDeny = async (id) => {
+    if (!confirm('Deny this sign-up request? The account will be permanently removed.')) return
+    setError('')
+    try {
+      await userApi.deny(id)
+      setSuccess('User registration denied')
+      fetchPending()
+    } catch (err) {
+      setError(err.response?.data?.message || 'Deny failed')
     }
   }
 
@@ -191,11 +203,17 @@ export default function UsersPage() {
                     <p className="font-medium text-gray-900 text-sm">{u.fullName || u.email}</p>
                     <p className="text-xs text-gray-400">{u.email} · Signed up via {u.authProvider || 'GOOGLE'}</p>
                   </div>
+                </div>      
+               <div className="flex items-center gap-2">
+                  <button onClick={() => handleApprove(u.id)}
+                    className="text-xs px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium">
+                    Approve
+                  </button>
+                  <button onClick={() => handleDeny(u.id)}
+                    className="text-xs px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg font-medium border border-red-200">
+                    Deny
+                  </button>
                 </div>
-                <button onClick={() => handleApprove(u.id)}
-                  className="text-xs px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium">
-                  Approve
-                </button>
               </div>
             ))}
           </div>
