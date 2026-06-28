@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ main ]
 
+permissions:
+  contents: read
+  packages: write
+
 env:
   REGISTRY: ghcr.io
   BACKEND_IMAGE: ghcr.io/${{ github.repository_owner }}/rxpharma-backend
@@ -96,6 +100,9 @@ jobs:
         with:
           context: rxpharma-frontend
           push: true
+          build-args: |
+            VITE_API_URL=${{ secrets.VITE_API_URL }}
+            VITE_GOOGLE_CLIENT_ID=${{ secrets.VITE_GOOGLE_CLIENT_ID }}
           tags: |
             ${{ env.FRONTEND_IMAGE }}:latest
             ${{ env.FRONTEND_IMAGE }}:${{ github.sha }}

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import DashboardLayout from '../../components/layout/DashboardLayout'
 import { saleApi } from '../../api/saleApi'
 import { drugApi } from '../../api/drugApi'
@@ -7,7 +7,7 @@ import { useAuth } from '../../context/AuthContext'
 const Badge = ({ children, color }) => {
   const colors = {
     green: 'bg-green-100 text-green-700',
-    blue: 'bg-blue-100 text-blue-700',
+    blue: 'bg-accent-100 text-accent-600',
     purple: 'bg-purple-100 text-purple-700',
     teal: 'bg-teal-100 text-teal-700',
     orange: 'bg-orange-100 text-orange-700',
@@ -32,11 +32,9 @@ export default function SalesPage() {
   const [success, setSuccess] = useState('')
   const [showNewSale, setShowNewSale] = useState(false)
   const [showInvoice, setShowInvoice] = useState(false)
-  const [selectedSale, setSelectedSale] = useState(null)
   const [invoice, setInvoice] = useState(null)
   const [drugs, setDrugs] = useState([])
 
-  // Fix 3 & 4: track which sale IDs have already had their invoice generated
   const [generatedInvoices, setGeneratedInvoices] = useState({})
 
   const [saleItems, setSaleItems] = useState([{ drugId: '', quantity: 1 }])
@@ -44,7 +42,7 @@ export default function SalesPage() {
     patientName: '', paymentMethod: 'CASH'
   })
 
-  const fetchSales = async () => {
+  const fetchSales = useCallback(async () => {
     setLoading(true)
     try {
       const res = await saleApi.getAll({ page, size: 10 })
@@ -52,9 +50,9 @@ export default function SalesPage() {
       setTotalPages(res.data.totalPages)
     } catch { setError('Failed to load sales') }
     finally { setLoading(false) }
-  }
+  }, [page])
 
-  useEffect(() => { fetchSales() }, [page])
+  useEffect(() => { fetchSales() }, [fetchSales])
 
   useEffect(() => {
     drugApi.search({ page: 0, size: 100 })
@@ -69,17 +67,15 @@ export default function SalesPage() {
         const res = await saleApi.search({ patientName: search, page: 0, size: 10 })
         setSales(res.data.content)
         setTotalPages(res.data.totalPages)
-      } catch {}
+      } catch { /* ignore */ }
     }, 400)
     return () => clearTimeout(t)
-  }, [search])
+  }, [search, fetchSales])
 
   const viewInvoice = async (sale) => {
     try {
       const res = await saleApi.getInvoice(sale.id)
       setInvoice(res.data)
-      setSelectedSale(sale)
-      // Fix 3 & 4: mark this sale's invoice as generated
       setGeneratedInvoices(prev => ({ ...prev, [sale.id]: true }))
       setShowInvoice(true)
     } catch { setError('Failed to load invoice') }
@@ -130,7 +126,6 @@ export default function SalesPage() {
       // Automatically open the invoice after creating the sale
       const invoiceRes = await saleApi.getInvoice(res.data.id)
       setInvoice(invoiceRes.data)
-      setSelectedSale(res.data)
       setGeneratedInvoices(prev => ({ ...prev, [res.data.id]: true }))
       setShowInvoice(true)
     } catch (err) {
@@ -158,7 +153,7 @@ export default function SalesPage() {
           <p className="text-sm text-gray-500">Point of Sale & Invoice Management</p>
         </div>
         <button onClick={() => setShowNewSale(true)}
-          className="flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+          className="flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-md">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/>
           </svg>
@@ -170,14 +165,14 @@ export default function SalesPage() {
       <div className="mb-6">
         <input type="text" placeholder="Search by patient name..."
           value={search} onChange={e => setSearch(e.target.value)}
-          className="w-full sm:w-96 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"/>
+          className="w-full sm:w-96 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent-500"/>
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-100">
+        <div className="bg-white rounded-xl shadow-sm border border-primary-100 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-primary-50/50 border-b border-primary-100">
               <tr>
                 {['Invoice', 'Patient', 'Cashier', 'Payment', 'Subtotal', 'Tax', 'Total', 'Date', 'Actions'].map(h => (
                   <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
@@ -191,7 +186,7 @@ export default function SalesPage() {
                 <tr><td colSpan={9} className="px-4 py-8 text-center text-gray-400">No sales found</td></tr>
               ) : sales.map(sale => (
                 <tr key={sale.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-4 py-3 font-mono text-xs text-teal-700 font-medium">{sale.invoiceNumber}</td>
+                  <td className="px-4 py-3 font-mono text-xs text-accent-600 font-medium">{sale.invoiceNumber}</td>
                   <td className="px-4 py-3 font-medium text-gray-900">{sale.patientName}</td>
                   <td className="px-4 py-3 text-gray-500">{sale.cashierName || '—'}</td>
                   <td className="px-4 py-3">
@@ -211,14 +206,14 @@ export default function SalesPage() {
                   </td>
                   <td className="px-4 py-3">
                     {/* Fix 3 & 4: show "View Receipt" if already generated, else "Invoice" */}
-                    {generatedInvoices[sale.id] ? (
+                      {generatedInvoices[sale.id] ? (
                       <button onClick={() => viewInvoice(sale)}
-                        className="text-xs px-2 py-1 bg-teal-50 text-teal-700 rounded hover:bg-teal-100 font-medium">
+                        className="text-xs px-2 py-1 bg-emerald-50 text-emerald-700 rounded hover:bg-emerald-100 font-medium">
                         View Receipt
                       </button>
                     ) : (
                       <button onClick={() => viewInvoice(sale)}
-                        className="text-xs px-2 py-1 bg-blue-50 text-blue-600 rounded hover:bg-blue-100">
+                        className="text-xs px-2 py-1 bg-accent-50 text-accent-600 rounded hover:bg-accent-100">
                         Invoice
                       </button>
                     )}
@@ -229,7 +224,7 @@ export default function SalesPage() {
           </table>
         </div>
         {totalPages > 1 && (
-          <div className="px-4 py-3 border-t border-gray-100 flex items-center justify-between">
+          <div className="px-4 py-3 border-t border-primary-100 flex items-center justify-between">
             <p className="text-sm text-gray-500">Page {page + 1} of {totalPages}</p>
             <div className="flex gap-2">
               <button disabled={page === 0} onClick={() => setPage(p => p - 1)}
@@ -245,7 +240,7 @@ export default function SalesPage() {
       {showNewSale && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 sticky top-0 bg-white">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-primary-100 sticky top-0 bg-white">
               <h3 className="font-semibold text-gray-900">New Sale — Point of Sale</h3>
               <button onClick={() => setShowNewSale(false)} className="text-gray-400 hover:text-gray-600">✕</button>
             </div>
@@ -257,14 +252,14 @@ export default function SalesPage() {
                   <label className="block text-xs font-medium text-gray-700 mb-1">Patient Name</label>
                   <input required value={saleForm.patientName}
                     onChange={e => setSaleForm({...saleForm, patientName: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent-500"
                     placeholder="Abebe Girma"/>
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-700 mb-1">Payment Method</label>
                   <select value={saleForm.paymentMethod}
                     onChange={e => setSaleForm({...saleForm, paymentMethod: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent-500">
                     <option value="CASH">Cash</option>
                     <option value="CARD">Card</option>
                     <option value="MOBILE_MONEY">Mobile Money</option>
@@ -277,14 +272,14 @@ export default function SalesPage() {
                 <div className="flex items-center justify-between mb-2">
                   <label className="text-xs font-medium text-gray-700">Drug Items</label>
                   <button type="button" onClick={addItem}
-                    className="text-xs text-teal-600 hover:underline">+ Add Item</button>
+                    className="text-xs text-accent-600 hover:underline">+ Add Item</button>
                 </div>
                 <div className="space-y-2">
                   {saleItems.map((item, i) => (
                     <div key={i} className="flex items-center gap-2">
                       <select value={item.drugId}
                         onChange={e => updateItem(i, 'drugId', e.target.value)}
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent-500">
                         <option value="">Select drug</option>
                         {drugs.map(d => (
                           <option key={d.id} value={d.id}>
@@ -294,7 +289,7 @@ export default function SalesPage() {
                       </select>
                       <input type="number" min="1" value={item.quantity}
                         onChange={e => updateItem(i, 'quantity', e.target.value)}
-                        className="w-20 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500"
+                        className="w-20 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent-500"
                         placeholder="Qty"/>
                       <span className="text-sm text-gray-500 w-24 text-right">
                         ETB {(getDrugPrice(item.drugId) * (parseInt(item.quantity) || 0)).toFixed(2)}
@@ -309,18 +304,18 @@ export default function SalesPage() {
               </div>
 
               {/* Totals */}
-              <div className="bg-teal-50 rounded-xl p-4 space-y-2 border border-teal-100">
+              <div className="bg-primary-50/50 rounded-xl p-4 space-y-2 border border-primary-100">
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Subtotal</span>
+                  <span className="text-primary-400">Subtotal</span>
                   <span className="font-medium">ETB {calcSubtotal().toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Tax (15%)</span>
+                  <span className="text-primary-400">Tax (15%)</span>
                   <span className="font-medium">ETB {calcTax().toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between text-base font-bold border-t border-teal-200 pt-2">
+                <div className="flex justify-between text-base font-bold border-t border-primary-200 pt-2">
                   <span>Total</span>
-                  <span className="text-teal-700">ETB {calcTotal().toFixed(2)}</span>
+                  <span className="text-accent-600">ETB {calcTotal().toFixed(2)}</span>
                 </div>
               </div>
 
@@ -328,7 +323,7 @@ export default function SalesPage() {
                 <button type="button" onClick={() => setShowNewSale(false)}
                   className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
                 <button type="submit"
-                  className="flex-1 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-sm font-medium">
+                  className="flex-1 px-4 py-2 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 text-white rounded-lg text-sm font-medium shadow-md">
                   Complete Sale & Generate Receipt
                 </button>
               </div>
@@ -343,34 +338,33 @@ export default function SalesPage() {
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
 
             {/* Fix 5: colored header bar */}
-            <div className="bg-gradient-to-r from-teal-700 to-teal-500 px-6 py-5 text-white">
+            <div className="bg-gradient-to-r from-primary-700 via-primary-600 to-primary-700 px-6 py-5 text-white">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
-                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                    <svg className="w-5 h-5 text-accent-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                     </svg>
                   </div>
                   <div>
                     <h2 className="font-bold text-lg">RxPharma</h2>
-                    <p className="text-teal-100 text-xs">Official Pharmacy Receipt</p>
+                    <p className="text-white/60 text-xs">Official Pharmacy Receipt</p>
                   </div>
                 </div>
                 <button onClick={() => setShowInvoice(false)}
-                  className="text-white text-opacity-70 hover:text-opacity-100 text-xl">✕</button>
+                  className="text-white/70 hover:text-white text-xl">✕</button>
               </div>
 
-              {/* Fix 5: invoice number + PAID status badge */}
               <div className="mt-4 flex items-center justify-between">
                 <div>
-                  <p className="text-teal-200 text-xs">Invoice Number</p>
+                  <p className="text-white/50 text-xs">Invoice Number</p>
                   <p className="font-mono font-bold text-white">{invoice.invoiceNumber}</p>
                 </div>
                 <div className="flex flex-col items-end gap-1">
-                  <span className="bg-green-400 text-green-900 text-xs font-bold px-3 py-1 rounded-full">
-                    ✓ PAID
+                  <span className="bg-emerald-400 text-emerald-900 text-xs font-bold px-3 py-1 rounded-full">
+                    PAID
                   </span>
-                  <span className="bg-white bg-opacity-20 text-white text-xs px-3 py-1 rounded-full">
+                  <span className="bg-white/10 text-white/80 text-xs px-3 py-1 rounded-full backdrop-blur-sm">
                     {invoice.paymentMethod}
                   </span>
                 </div>
@@ -397,8 +391,8 @@ export default function SalesPage() {
               </div>
 
               {/* Items */}
-              <div className="border border-dashed border-teal-200 rounded-xl p-4 mb-4">
-                <p className="text-xs font-bold text-teal-700 uppercase mb-3 tracking-wider">Dispensed Items</p>
+              <div className="border border-dashed border-accent-200 rounded-xl p-4 mb-4">
+                <p className="text-xs font-bold text-accent-600 uppercase mb-3 tracking-wider">Dispensed Items</p>
                 <div className="space-y-3">
                   {invoice.items?.map(item => (
                     <div key={item.id} className="flex items-center justify-between">
@@ -424,21 +418,21 @@ export default function SalesPage() {
                   <span>Tax (15%)</span>
                   <span>ETB {parseFloat(invoice.taxAmount).toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between text-base font-bold pt-2 border-t-2 border-teal-500 text-teal-700">
+                <div className="flex justify-between text-base font-bold pt-2 border-t-2 border-accent-500 text-accent-600">
                   <span>Total Paid</span>
                   <span>ETB {parseFloat(invoice.totalAmount).toFixed(2)}</span>
                 </div>
               </div>
 
               {/* Footer */}
-              <div className="bg-teal-50 rounded-xl p-3 text-center border border-teal-100">
-                <p className="text-xs text-teal-700 font-medium">Thank you for choosing RxPharma</p>
-                <p className="text-xs text-teal-500 mt-0.5">Keep this receipt for your records</p>
+              <div className="bg-primary-50/50 rounded-xl p-3 text-center border border-primary-100">
+                <p className="text-xs text-primary-700 font-medium">Thank you for choosing RxPharma</p>
+                <p className="text-xs text-primary-400 mt-0.5">Keep this receipt for your records</p>
               </div>
 
               {/* Fix 3 & 4: only show View Receipt button — no re-generate option */}
               <button onClick={() => setShowInvoice(false)}
-                className="mt-4 w-full px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-sm font-medium">
+                className="mt-4 w-full px-4 py-2 bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-700 hover:to-primary-600 text-white rounded-lg text-sm font-medium shadow-md">
                 Close Receipt
               </button>
             </div>

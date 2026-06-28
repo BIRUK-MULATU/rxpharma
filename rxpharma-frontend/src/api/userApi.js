@@ -10,4 +10,5 @@ export const userApi = {
   delete: (id) => api.delete(`/api/users/${id}`),
   getPending: () => api.get('/api/users/pending'),
   approve: (id) => api.patch(`/api/users/${id}/approve`),
+  deny: (id) => api.delete(`/api/users/${id}/deny`),
 }

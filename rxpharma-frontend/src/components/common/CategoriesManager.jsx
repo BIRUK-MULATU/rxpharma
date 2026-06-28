@@ -42,7 +42,7 @@ export default function CategoriesManager({ onClose }) {
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[85vh] flex flex-col">
 
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-primary-100">
           <div>
             <h3 className="font-semibold text-gray-900">Manage Drug Categories</h3>
             <p className="text-xs text-gray-400 mt-0.5">{categories.length} categories</p>
@@ -72,11 +72,11 @@ export default function CategoriesManager({ onClose }) {
               value={newCategory}
               onChange={e => setNewCategory(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleAdd())}
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent-500"
               placeholder="e.g. Neurology"
             />
             <button onClick={handleAdd}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium">
+              className="px-4 py-2 bg-gradient-to-r from-accent-600 to-accent-500 hover:from-accent-700 hover:to-accent-600 text-white rounded-lg text-sm font-medium shadow-md">
               Add
             </button>
           </div>
@@ -92,7 +92,7 @@ export default function CategoriesManager({ onClose }) {
               <div key={cat}
                 className="flex items-center justify-between px-3 py-2.5 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                 <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full"/>
+                  <div className="w-2 h-2 bg-accent-500 rounded-full"/>
                   <span className="text-sm text-gray-700">{cat}</span>
                 </div>
                 <button onClick={() => handleDelete(cat)}
@@ -105,13 +105,13 @@ export default function CategoriesManager({ onClose }) {
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-gray-100 flex gap-3">
+        <div className="px-6 py-4 border-t border-primary-100 flex gap-3">
           <button onClick={handleReset}
             className="flex-1 px-4 py-2 border border-gray-300 text-gray-600 rounded-lg text-sm hover:bg-gray-50">
             Reset to Defaults
           </button>
           <button onClick={onClose}
-            className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium">
+            className="flex-1 px-4 py-2 bg-gradient-to-r from-accent-600 to-accent-500 hover:from-accent-700 hover:to-accent-600 text-white rounded-lg text-sm font-medium shadow-md">
             Done
           </button>
         </div>

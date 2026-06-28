@@ -43,9 +43,9 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 to-blue-700 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-primary-900 via-primary-700 to-primary-900 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
-        <button onClick={() => navigate('/login')} className="text-sm text-blue-600 hover:underline mb-6 flex items-center gap-1">
+        <button onClick={() => navigate('/login')} className="text-sm text-accent-600 hover:underline mb-6 flex items-center gap-1">
           ← Back to Login
         </button>
 
@@ -70,10 +70,10 @@ export default function ForgotPasswordPage() {
               type="email" required value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="your@email.com"
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-500 text-sm"
             />
             <button type="submit" disabled={loading}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-lg text-sm">
+              className="w-full bg-gradient-to-r from-accent-600 to-accent-500 hover:from-accent-700 hover:to-accent-600 text-white font-medium py-2.5 rounded-lg text-sm shadow-md">
               {loading ? 'Sending...' : 'Get Reset Token'}
             </button>
           </form>
@@ -91,17 +91,17 @@ export default function ForgotPasswordPage() {
               value={form.newPassword}
               onChange={(e) => setForm({ ...form, newPassword: e.target.value })}
               placeholder="New password"
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-500 text-sm"
             />
             <input
               type="password" required
               value={form.confirmPassword}
               onChange={(e) => setForm({ ...form, confirmPassword: e.target.value })}
               placeholder="Confirm new password"
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent-500 text-sm"
             />
             <button type="submit" disabled={loading}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-lg text-sm">
+              className="w-full bg-gradient-to-r from-accent-600 to-accent-500 hover:from-accent-700 hover:to-accent-600 text-white font-medium py-2.5 rounded-lg text-sm shadow-md">
               {loading ? 'Resetting...' : 'Reset Password'}
             </button>
           </form>
@@ -116,7 +116,7 @@ export default function ForgotPasswordPage() {
             </div>
             <p className="text-gray-700 font-medium">Password reset successfully!</p>
             <button onClick={() => navigate('/login')}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-lg text-sm">
+              className="w-full bg-gradient-to-r from-accent-600 to-accent-500 hover:from-accent-700 hover:to-accent-600 text-white font-medium py-2.5 rounded-lg text-sm shadow-md">
               Back to Login
             </button>
           </div>

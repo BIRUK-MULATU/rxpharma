@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import DashboardLayout from '../../components/layout/DashboardLayout'
 import { supplierApi } from '../../api/supplierApi'
 import { useAuth } from '../../context/AuthContext'
@@ -7,7 +7,7 @@ const Badge = ({ children, color }) => {
   const colors = {
     green: 'bg-green-100 text-green-700',
     red: 'bg-red-100 text-red-700',
-    blue: 'bg-blue-100 text-blue-700',
+    blue: 'bg-accent-100 text-accent-600',
     orange: 'bg-orange-100 text-orange-700',
     purple: 'bg-purple-100 text-purple-700',
   }
@@ -39,16 +39,16 @@ export default function SuppliersPage() {
     address: ''
   })
 
-  const fetchSuppliers = async (type = '') => {
+  const fetchSuppliers = useCallback(async (type = '') => {
     setLoading(true)
     try {
       const res = await supplierApi.getAll(type || undefined)
       setSuppliers(res.data)
     } catch { setError('Failed to load suppliers') }
     finally { setLoading(false) }
-  }
+  }, [])
 
-  useEffect(() => { fetchSuppliers(filterType) }, [filterType])
+  useEffect(() => { fetchSuppliers(filterType) }, [filterType, fetchSuppliers])
 
   const openCreate = () => {
     setEditSupplier(null)
@@ -144,7 +144,7 @@ export default function SuppliersPage() {
         </div>
         {hasRole('ADMIN', 'SUPPLIER_MANAGER') && (
           <button onClick={openCreate}
-            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+            className="flex items-center gap-2 bg-gradient-to-r from-accent-600 to-accent-500 hover:from-accent-700 hover:to-accent-600 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-md">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/>
             </svg>
@@ -156,10 +156,10 @@ export default function SuppliersPage() {
       {/* Stats Row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {[
-          { label: 'Total', value: stats.total, color: 'from-blue-500 to-cyan-600' },
-          { label: 'Active', value: stats.active, color: 'from-green-500 to-emerald-600' },
-          { label: 'Wholesalers', value: stats.wholesalers, color: 'from-orange-500 to-amber-600' },
-          { label: 'Importers', value: stats.importers, color: 'from-purple-500 to-violet-600' },
+          { label: 'Total', value: stats.total, color: 'from-primary-600 to-primary-500' },
+          { label: 'Active', value: stats.active, color: 'from-emerald-600 to-emerald-500' },
+          { label: 'Wholesalers', value: stats.wholesalers, color: 'from-amber-600 to-amber-500' },
+          { label: 'Importers', value: stats.importers, color: 'from-purple-600 to-purple-500' },
         ].map(stat => (
           <div key={stat.label}
             className={`bg-gradient-to-br ${stat.color} rounded-xl p-4 text-white`}>
@@ -176,12 +176,12 @@ export default function SuppliersPage() {
           placeholder="Search by company, email or contact..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent-500"
         />
         <select
           value={filterType}
           onChange={e => setFilterType(e.target.value)}
-          className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+          className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent-500">
           <option value="">All Types</option>
           <option value="WHOLESALER">Wholesaler</option>
           <option value="IMPORTER">Importer</option>
@@ -199,12 +199,12 @@ export default function SuppliersPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtered.map(supplier => (
             <div key={supplier.id}
-              className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition-shadow">
+              className="bg-white rounded-xl shadow-sm border border-primary-100 p-5 hover:shadow-md transition-shadow">
 
               {/* Card Header */}
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-3">
-                  <div className="w-11 h-11 bg-gradient-to-br from-blue-500 to-cyan-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <div className="w-11 h-11 bg-gradient-to-br from-primary-600 to-primary-500 rounded-xl flex items-center justify-center flex-shrink-0">
                     <span className="text-white font-bold text-sm">
                       {supplier.companyName.charAt(0)}
                     </span>
@@ -275,7 +275,7 @@ export default function SuppliersPage() {
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 sticky top-0 bg-white">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-primary-100 sticky top-0 bg-white">
               <h3 className="font-semibold text-gray-900">
                 {editSupplier ? 'Edit Supplier' : 'Add New Supplier'}
               </h3>
@@ -291,7 +291,7 @@ export default function SuppliersPage() {
                 <label className="block text-xs font-medium text-gray-700 mb-1">Company Name</label>
                 <input required value={form.companyName}
                   onChange={e => setForm({...form, companyName: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent-500"
                   placeholder="MediSupply Ethiopia"/>
               </div>
 
@@ -299,7 +299,7 @@ export default function SuppliersPage() {
                 <label className="block text-xs font-medium text-gray-700 mb-1">Contact Person</label>
                 <input required value={form.contactPerson}
                   onChange={e => setForm({...form, contactPerson: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent-500"
                   placeholder="Abebe Kebede"/>
               </div>
 
@@ -307,7 +307,7 @@ export default function SuppliersPage() {
                 <label className="block text-xs font-medium text-gray-700 mb-1">Email</label>
                 <input required type="email" value={form.email}
                   onChange={e => setForm({...form, email: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent-500"
                   placeholder="contact@supplier.com"/>
               </div>
 
@@ -315,7 +315,7 @@ export default function SuppliersPage() {
                 <label className="block text-xs font-medium text-gray-700 mb-1">Phone</label>
                 <input required value={form.phone}
                   onChange={e => setForm({...form, phone: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent-500"
                   placeholder="+251911234567"/>
               </div>
 
@@ -323,7 +323,7 @@ export default function SuppliersPage() {
                 <label className="block text-xs font-medium text-gray-700 mb-1">Supplier Type</label>
                 <select value={form.supplierType}
                   onChange={e => setForm({...form, supplierType: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent-500">
                   <option value="WHOLESALER">Wholesaler</option>
                   <option value="IMPORTER">Importer</option>
                 </select>
@@ -333,7 +333,7 @@ export default function SuppliersPage() {
                 <label className="block text-xs font-medium text-gray-700 mb-1">Location / Address</label>
                 <input value={form.address}
                   onChange={e => setForm({...form, address: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent-500"
                   placeholder="Addis Ababa, Bole Sub City"/>
               </div>
 
@@ -342,7 +342,7 @@ export default function SuppliersPage() {
                   <label className="block text-xs font-medium text-gray-700 mb-1">Status</label>
                   <select value={form.status}
                     onChange={e => setForm({...form, status: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent-500">
                     <option value="ACTIVE">ACTIVE</option>
                     <option value="ON_HOLD">ON_HOLD</option>
                   </select>
@@ -355,7 +355,7 @@ export default function SuppliersPage() {
                   Cancel
                 </button>
                 <button type="submit"
-                  className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium">
+                  className="flex-1 px-4 py-2 bg-gradient-to-r from-accent-600 to-accent-500 hover:from-accent-700 hover:to-accent-600 text-white rounded-lg text-sm font-medium shadow-md">
                   {editSupplier ? 'Update' : 'Create'}
                 </button>
               </div>

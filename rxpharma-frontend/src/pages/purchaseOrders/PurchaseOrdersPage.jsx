@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import DashboardLayout from '../../components/layout/DashboardLayout'
 import { purchaseOrderApi } from '../../api/purchaseOrderApi'
 import { supplierApi } from '../../api/supplierApi'
@@ -8,7 +8,7 @@ import { useAuth } from '../../context/AuthContext'
 const Badge = ({ children, color }) => {
   const colors = {
     gray: 'bg-gray-100 text-gray-700',
-    blue: 'bg-blue-100 text-blue-700',
+    blue: 'bg-accent-100 text-accent-600',
     green: 'bg-green-100 text-green-700',
     red: 'bg-red-100 text-red-700',
   }
@@ -50,7 +50,7 @@ export default function PurchaseOrdersPage() {
     deliveryDate: '', notes: ''
   })
 
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     setLoading(true)
     try {
       const res = await purchaseOrderApi.getAll({ page, size: 10 })
@@ -58,17 +58,12 @@ export default function PurchaseOrdersPage() {
       setTotalPages(res.data.totalPages)
     } catch { setError('Failed to load purchase orders') }
     finally { setLoading(false) }
-  }
+  }, [page])
 
-  useEffect(() => { fetchOrders() }, [page])
-
-  // useEffect(() => {
-  //   supplierApi.getAll().then(res => setSuppliers(res.data)).catch(() => {})
-  //   drugApi.search({ page: 0, size: 100 }).then(res => setDrugs(res.data.content)).catch(() => {})
-  // }, [])
+  useEffect(() => { fetchOrders() }, [fetchOrders])
 
       useEffect(() => {
-      supplierApi.getAll().then(res => setSuppliers(res.data)).catch(() => {})
+      supplierApi.getAll().then(res => setSuppliers(res.data)).catch(() => { /* ignore */ })
       drugApi.search({ page: 0, size: 100 })
         .then(res => setDrugs(res.data.content))
         .catch(() => setError('Failed to load medicine list — check your permissions'))
@@ -181,7 +176,7 @@ export default function PurchaseOrdersPage() {
           setOrderItems([{ drugId: '', quantity: 1, unitCost: '' }])
           setShowModal(true)
         }}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+          className="flex items-center gap-2 bg-gradient-to-r from-accent-600 to-accent-500 hover:from-accent-700 hover:to-accent-600 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-md">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/>
           </svg>
@@ -198,10 +193,10 @@ export default function PurchaseOrdersPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-100">
+        <div className="bg-white rounded-xl shadow-sm border border-primary-100 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-primary-50/50 border-b border-primary-100">
               <tr>
                 {['#', 'Supplier', 'Ordered By', 'Status', 'Items', 'Total Cost', 'Order Date', 'Delivery Date', 'Actions'].map(h => (
                   <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
@@ -225,7 +220,7 @@ export default function PurchaseOrdersPage() {
                     </td>
                     <td className="px-4 py-3 text-gray-500">
                       {items.length > 0 ? (
-                        <span className="text-blue-600 font-medium">{items.length} items</span>
+                        <span className="text-accent-600 font-medium">{items.length} items</span>
                       ) : '—'}
                     </td>
                     <td className="px-4 py-3 font-semibold text-gray-900">
@@ -237,8 +232,8 @@ export default function PurchaseOrdersPage() {
                     <td className="px-4 py-3 text-gray-500">{order.deliveryDate || '—'}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <button onClick={() => openDetail(order)}
-                          className="text-xs px-2 py-1 bg-blue-50 text-blue-600 rounded hover:bg-blue-100">
+                          <button onClick={() => openDetail(order)}
+                            className="text-xs px-2 py-1 bg-accent-50 text-accent-600 rounded hover:bg-accent-100">
                           View
                         </button>
                         {hasRole('ADMIN') && order.status === 'DRAFT' && (
@@ -256,7 +251,7 @@ export default function PurchaseOrdersPage() {
           </table>
         </div>
         {totalPages > 1 && (
-          <div className="px-4 py-3 border-t border-gray-100 flex items-center justify-between">
+          <div className="px-4 py-3 border-t border-primary-100 flex items-center justify-between">
             <p className="text-sm text-gray-500">Page {page + 1} of {totalPages}</p>
             <div className="flex gap-2">
               <button disabled={page === 0} onClick={() => setPage(p => p - 1)}
@@ -272,7 +267,7 @@ export default function PurchaseOrdersPage() {
       {showModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 sticky top-0 bg-white">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-primary-100 sticky top-0 bg-white">
               <h3 className="font-semibold text-gray-900">New Purchase Order</h3>
               <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600">✕</button>
             </div>
@@ -284,7 +279,7 @@ export default function PurchaseOrdersPage() {
                   <label className="block text-xs font-medium text-gray-700 mb-1">Supplier</label>
                   <select required value={form.supplierId}
                     onChange={e => setForm({...form, supplierId: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent-500">
                     <option value="">Select supplier</option>
                     {suppliers.map(s => <option key={s.id} value={s.id}>{s.companyName}</option>)}
                   </select>
@@ -293,7 +288,7 @@ export default function PurchaseOrdersPage() {
                   <label className="block text-xs font-medium text-gray-700 mb-1">Expected Delivery</label>
                   <input type="date" value={form.deliveryDate}
                     onChange={e => setForm({...form, deliveryDate: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent-500"/>
                 </div>
               </div>
 
@@ -302,7 +297,7 @@ export default function PurchaseOrdersPage() {
                 <div className="flex items-center justify-between mb-2">
                   <label className="text-xs font-medium text-gray-700">Medicine Items</label>
                   <button type="button" onClick={addItem}
-                    className="text-xs text-blue-600 hover:underline font-medium">+ Add Item</button>
+                    className="text-xs text-accent-600 hover:underline font-medium">+ Add Item</button>
                 </div>
                 <div className="space-y-2">
                   {orderItems.map((item, i) => (
@@ -310,7 +305,7 @@ export default function PurchaseOrdersPage() {
                       <div className="col-span-5">
                         <select value={item.drugId}
                           onChange={e => updateItem(i, 'drugId', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent-500">
                           <option value="">Select medicine</option>
                           {drugs.map(d => (
                             <option key={d.id} value={d.id}>{d.name} ({d.category})</option>
@@ -321,13 +316,13 @@ export default function PurchaseOrdersPage() {
                         <input type="number" min="1" value={item.quantity}
                           onChange={e => updateItem(i, 'quantity', e.target.value)}
                           placeholder="Qty"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent-500"/>
                       </div>
                       <div className="col-span-3">
                         <input type="number" step="0.01" min="0" value={item.unitCost}
                           onChange={e => updateItem(i, 'unitCost', e.target.value)}
                           placeholder="Unit cost"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent-500"/>
                       </div>
                       <div className="col-span-1 flex justify-center">
                         {orderItems.length > 1 && (
@@ -340,9 +335,9 @@ export default function PurchaseOrdersPage() {
                 </div>
 
                 {/* Auto Total */}
-                <div className="mt-3 bg-blue-50 rounded-lg px-4 py-3 flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Calculated Total</span>
-                  <span className="font-bold text-blue-600">ETB {calcTotal().toFixed(2)}</span>
+                <div className="mt-3 bg-primary-50 rounded-lg px-4 py-3 flex justify-between items-center">
+                  <span className="text-sm text-primary-500">Calculated Total</span>
+                  <span className="font-bold text-accent-600">ETB {calcTotal().toFixed(2)}</span>
                 </div>
               </div>
 
@@ -350,7 +345,7 @@ export default function PurchaseOrdersPage() {
                 <label className="block text-xs font-medium text-gray-700 mb-1">Notes (optional)</label>
                 <input value={form.notes}
                   onChange={e => setForm({...form, notes: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent-500"
                   placeholder="Special instructions..."/>
               </div>
 
@@ -358,7 +353,7 @@ export default function PurchaseOrdersPage() {
                 <button type="button" onClick={() => setShowModal(false)}
                   className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
                 <button type="submit"
-                  className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium">
+                  className="flex-1 px-4 py-2 bg-gradient-to-r from-accent-600 to-accent-500 hover:from-accent-700 hover:to-accent-600 text-white rounded-lg text-sm font-medium shadow-md">
                   Create Order
                 </button>
               </div>
@@ -371,7 +366,7 @@ export default function PurchaseOrdersPage() {
       {showDetailModal && selectedOrder && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 sticky top-0 bg-white">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-primary-100 sticky top-0 bg-white">
               <h3 className="font-semibold text-gray-900">Purchase Order #{selectedOrder.id}</h3>
               <button onClick={() => setShowDetailModal(false)} className="text-gray-400 hover:text-gray-600">✕</button>
             </div>
@@ -393,7 +388,7 @@ export default function PurchaseOrdersPage() {
                 </div>
                 <div>
                   <p className="text-xs text-gray-400">Total Cost</p>
-                  <p className="font-bold text-blue-600 text-base">ETB {parseFloat(selectedOrder.totalCost).toFixed(2)}</p>
+                  <p className="font-bold text-accent-600 text-base">ETB {parseFloat(selectedOrder.totalCost).toFixed(2)}</p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-400">Order Date</p>
@@ -428,7 +423,7 @@ export default function PurchaseOrdersPage() {
                             </p>
                           </div>
                           <div className="text-right">
-                            <p className="text-sm font-semibold text-blue-600">
+                            <p className="text-sm font-semibold text-accent-600">
                               ETB {parseFloat(item.subtotal || 0).toFixed(2)}
                             </p>
                           </div>
@@ -436,7 +431,7 @@ export default function PurchaseOrdersPage() {
                       ))}
                       <div className="flex justify-between px-4 py-2 border-t border-gray-200 mt-2">
                         <span className="text-sm font-semibold text-gray-700">Total</span>
-                        <span className="text-sm font-bold text-blue-600">
+                        <span className="text-sm font-bold text-accent-600">
                           ETB {parseFloat(selectedOrder.totalCost).toFixed(2)}
                         </span>
                       </div>
@@ -447,12 +442,12 @@ export default function PurchaseOrdersPage() {
 
               {/* Status Actions */}
               {selectedOrder.status !== 'DELIVERED' && selectedOrder.status !== 'CANCELLED' && (
-                <div className="border-t border-gray-100 pt-4">
+                <div className="border-t border-primary-100 pt-4">
                   <p className="text-xs font-semibold text-gray-500 uppercase mb-3">Update Status</p>
                   <div className="flex flex-wrap gap-2">
                     {selectedOrder.status === 'DRAFT' && (
                       <button onClick={() => handleUpdateStatus(selectedOrder.id, 'SENT')}
-                        className="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-xs font-medium hover:bg-blue-100">
+                        className="px-3 py-1.5 bg-accent-50 text-accent-600 rounded-lg text-xs font-medium hover:bg-accent-100">
                         Mark as Sent
                       </button>
                     )}
@@ -483,7 +478,7 @@ export default function PurchaseOrdersPage() {
       {showDeliverModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-primary-100">
               <h3 className="font-semibold text-gray-900">Confirm Delivery</h3>
               <button onClick={() => setShowDeliverModal(false)} className="text-gray-400 hover:text-gray-600">✕</button>
             </div>
@@ -492,20 +487,20 @@ export default function PurchaseOrdersPage() {
                 <label className="block text-xs font-medium text-gray-700 mb-1">Actual Delivery Date</label>
                 <input required type="date" value={deliverForm.deliveryDate}
                   onChange={e => setDeliverForm({...deliverForm, deliveryDate: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent-500"/>
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">Notes</label>
                 <input value={deliverForm.notes}
                   onChange={e => setDeliverForm({...deliverForm, notes: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent-500"
                   placeholder="All items received in good condition"/>
               </div>
               <div className="flex gap-3">
                 <button type="button" onClick={() => setShowDeliverModal(false)}
                   className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
                 <button type="submit"
-                  className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-medium">
+                  className="flex-1 px-4 py-2 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-700 hover:to-emerald-600 text-white rounded-lg text-sm font-medium shadow-md">
                   Confirm Delivery
                 </button>
               </div>

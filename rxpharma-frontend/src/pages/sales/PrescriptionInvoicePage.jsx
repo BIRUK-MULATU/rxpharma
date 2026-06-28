@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import DashboardLayout from '../../components/layout/DashboardLayout'
 import { prescriptionApi } from '../../api/prescriptionApi'
 import { saleApi } from '../../api/saleApi'
@@ -7,7 +7,7 @@ import { useAuth } from '../../context/AuthContext'
 const Badge = ({ children, color }) => {
   const colors = {
     green: 'bg-green-100 text-green-700',
-    blue: 'bg-blue-100 text-blue-700',
+    blue: 'bg-accent-100 text-accent-600',
     yellow: 'bg-yellow-100 text-yellow-700',
   }
   return <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${colors[color]}`}>{children}</span>
@@ -28,7 +28,7 @@ export default function PrescriptionInvoicePage() {
   const [processing, setProcessing] = useState(false)
   const [completedSale, setCompletedSale] = useState(null)
 
-  const fetchDispensedPrescriptions = async () => {
+  const fetchDispensedPrescriptions = useCallback(async () => {
     setLoading(true)
     try {
       const res = await prescriptionApi.getAll({ page: 0, size: 50 })
@@ -36,9 +36,9 @@ export default function PrescriptionInvoicePage() {
       setPrescriptions(dispensed)
     } catch { setError('Failed to load prescriptions') }
     finally { setLoading(false) }
-  }
+  }, [])
 
-  useEffect(() => { fetchDispensedPrescriptions() }, [])
+  useEffect(() => { fetchDispensedPrescriptions() }, [fetchDispensedPrescriptions])
 
   const openInvoiceModal = async (prescription) => {
     setSelectedPrescription(prescription)
@@ -50,13 +50,6 @@ export default function PrescriptionInvoicePage() {
     } catch { setPrescriptionDrugs([]) }
     setShowInvoiceModal(true)
   }
-
-  const calcSubtotal = () => prescriptionDrugs.reduce((sum, pd) => {
-    return sum + ((pd.unitPrice || 0) * pd.quantity)
-  }, 0)
-
-  const calcTax = () => calcSubtotal() * 0.15
-  const calcTotal = () => calcSubtotal() + calcTax()
 
   const handleGenerateInvoice = async () => {
     if (prescriptionDrugs.length === 0) {
@@ -115,13 +108,13 @@ export default function PrescriptionInvoicePage() {
       </div>
 
       {/* Info Banner */}
-      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-6 flex items-start gap-3">
-        <svg className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div className="bg-primary-50 border border-primary-200 rounded-xl p-4 mb-6 flex items-start gap-3">
+        <svg className="w-5 h-5 text-primary-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
         </svg>
         <div>
-          <p className="text-sm font-medium text-blue-700">Workflow</p>
-          <p className="text-xs text-blue-600 mt-0.5">
+          <p className="text-sm font-medium text-primary-700">Workflow</p>
+          <p className="text-xs text-primary-600 mt-0.5">
             Only <strong>DISPENSED</strong> prescriptions appear here.
             Select a prescription → choose payment method → generate invoice.
             Stock is automatically deducted when the sale is processed.
@@ -133,7 +126,7 @@ export default function PrescriptionInvoicePage() {
       <div className="mb-6">
         <input type="text" placeholder="Search by patient or doctor name..."
           value={search} onChange={e => setSearch(e.target.value)}
-          className="w-full sm:w-96 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+          className="w-full sm:w-96 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent-500"/>
       </div>
 
       {/* Prescriptions List */}
@@ -142,7 +135,7 @@ export default function PrescriptionInvoicePage() {
           <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"/>
         </div>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-xl border border-gray-100">
+        <div className="text-center py-16 bg-white rounded-xl border border-primary-100">
           <svg className="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
           </svg>
@@ -153,7 +146,7 @@ export default function PrescriptionInvoicePage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtered.map(p => (
             <div key={p.id}
-              className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 hover:shadow-md transition-all">
+              className="bg-white rounded-xl shadow-sm border border-primary-100 p-5 hover:shadow-md transition-all">
               <div className="flex items-start justify-between mb-3">
                 <div>
                   <p className="font-semibold text-gray-900">{p.patientName}</p>
@@ -166,7 +159,7 @@ export default function PrescriptionInvoicePage() {
                 <p>Dispensed by: {p.dispensedBy || '—'}</p>
               </div>
               <button onClick={() => openInvoiceModal(p)}
-                className="w-full py-2 bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-700 hover:to-cyan-700 text-white rounded-lg text-sm font-medium transition-all">
+                className="w-full py-2 bg-gradient-to-r from-accent-600 to-accent-500 hover:from-accent-700 hover:to-accent-600 text-white rounded-lg text-sm font-medium shadow-md transition-all">
                 Generate Invoice
               </button>
             </div>
@@ -178,7 +171,7 @@ export default function PrescriptionInvoicePage() {
       {showInvoiceModal && selectedPrescription && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 sticky top-0 bg-white">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-primary-100 sticky top-0 bg-white">
               <h3 className="font-semibold text-gray-900">
                 {completedSale ? 'Invoice Receipt' : 'Generate Invoice'}
               </h3>
@@ -189,8 +182,8 @@ export default function PrescriptionInvoicePage() {
               {!completedSale ? (
                 <>
                   {/* Prescription Info */}
-                  <div className="bg-blue-50 rounded-xl p-4 mb-4">
-                    <p className="text-xs text-blue-500 font-medium uppercase mb-1">Prescription Details</p>
+                  <div className="bg-primary-50 rounded-xl p-4 mb-4">
+                    <p className="text-xs text-primary-500 font-medium uppercase mb-1">Prescription Details</p>
                     <p className="font-semibold text-gray-900">{selectedPrescription.patientName}</p>
                     <p className="text-sm text-gray-500">Dr. {selectedPrescription.doctorName}</p>
                     <p className="text-xs text-gray-400 mt-1">Issued: {selectedPrescription.issuedDate}</p>
@@ -211,7 +204,7 @@ export default function PrescriptionInvoicePage() {
                               <p className="text-sm font-medium text-gray-900">{pd.drugName}</p>
                               <p className="text-xs text-gray-400">{pd.dosageInstructions}</p>
                             </div>
-                            <span className="text-sm font-semibold text-blue-600">×{pd.quantity}</span>
+                            <span className="text-sm font-semibold text-accent-600">×{pd.quantity}</span>
                           </div>
                         ))}
                       </div>
@@ -222,7 +215,7 @@ export default function PrescriptionInvoicePage() {
                   <div className="mb-5">
                     <label className="block text-xs font-medium text-gray-700 mb-1">Payment Method</label>
                     <select value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent-500">
                       <option value="CASH">Cash</option>
                       <option value="CARD">Card</option>
                       <option value="MOBILE_MONEY">Mobile Money</option>
@@ -237,7 +230,7 @@ export default function PrescriptionInvoicePage() {
                       Cancel
                     </button>
                     <button onClick={handleGenerateInvoice} disabled={processing}
-                      className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg text-sm font-medium">
+                      className="flex-1 px-4 py-2 bg-gradient-to-r from-accent-600 to-accent-500 hover:from-accent-700 hover:to-accent-600 disabled:opacity-60 text-white rounded-lg text-sm font-medium shadow-md">
                       {processing ? 'Processing...' : 'Generate Invoice'}
                     </button>
                   </div>
@@ -253,7 +246,7 @@ export default function PrescriptionInvoicePage() {
                     </div>
                     <h4 className="font-bold text-gray-900">Payment Complete!</h4>
                     <p className="text-xs text-gray-400 mt-1">Invoice generated successfully</p>
-                    <p className="font-mono text-sm text-blue-600 mt-2">{invoice?.invoiceNumber}</p>
+                    <p className="font-mono text-sm text-accent-600 mt-2">{invoice?.invoiceNumber}</p>
                   </div>
 
                   {/* Receipt Details */}
@@ -285,15 +278,15 @@ export default function PrescriptionInvoicePage() {
                       </div>
                       <div className="flex justify-between font-bold text-sm border-t border-gray-300 pt-2 mt-1">
                         <span>Total</span>
-                        <span className="text-blue-600">ETB {parseFloat(invoice?.totalAmount || 0).toFixed(2)}</span>
+                        <span className="text-accent-600">ETB {parseFloat(invoice?.totalAmount || 0).toFixed(2)}</span>
                       </div>
                     </div>
 
-                    <p className="text-center text-xs text-gray-400 mt-3">Thank you for your visit! 🏥</p>
+                    <p className="text-center text-xs text-gray-400 mt-3">Thank you for your visit!</p>
                   </div>
 
                   <button onClick={() => setShowInvoiceModal(false)}
-                    className="w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium">
+                    className="w-full px-4 py-2 bg-gradient-to-r from-accent-600 to-accent-500 hover:from-accent-700 hover:to-accent-600 text-white rounded-lg text-sm font-medium shadow-md">
                     Done
                   </button>
                 </>

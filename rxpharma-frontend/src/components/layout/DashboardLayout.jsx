@@ -6,7 +6,7 @@ export default function DashboardLayout({ children, title }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
+    <div className="flex h-screen bg-primary-50/50 dark:bg-primary-900 overflow-hidden">
       <Sidebar
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
@@ -16,7 +16,7 @@ export default function DashboardLayout({ children, title }) {
           onMenuClick={() => setSidebarOpen(true)}
           title={title}
         />
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="flex-1 overflow-y-auto p-6 dark:text-primary-100">
           {children}
         </main>
       </div>
