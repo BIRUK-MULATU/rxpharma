@@ -127,7 +127,7 @@ export default function Sidebar({ isOpen, onClose }) {
             </svg>
           </div>
           <div>
-            <h1 className="font-bold text-white text-base">RxPharma</h1>
+            <h1 className="font-bold text-white text-base">DODO PHARMACY</h1>
             <p className="text-xs text-white/50">Management System</p>
           </div>
         </div>
