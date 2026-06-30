@@ -1,6 +1,6 @@
-# RxPharma
+# DODO PHARMACY
 
-RxPharma is a professional pharmacy management system built as a modern full-stack application. It supports inventory, supplier management, prescriptions, sales, purchase orders, user administration, and dashboard reporting.
+DODO PHARMACY is a professional pharmacy management system built as a modern full-stack application. It supports inventory, supplier management, prescriptions, sales, purchase orders, user administration, and dashboard reporting.
 
 ## Project Overview
 
@@ -11,9 +11,9 @@ This repository includes:
 
 ## Architecture
 
-![RxPharma Architecture](./rxpharma_Architecture.png)
+![DODO PHARMACY Architecture](./rxpharma_Architecture.png)
 
-RxPharma is implemented with a layered client-server architecture:
+DODO PHARMACYis implemented with a layered client-server architecture:
 
 - **Frontend**: React + Vite SPA delivering pharmacy workflows and secure API interactions.
 - **API layer**: Spring Boot controllers exposing REST endpoints under `/api/**`.
