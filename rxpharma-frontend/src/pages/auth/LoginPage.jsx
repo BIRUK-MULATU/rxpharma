@@ -139,7 +139,6 @@ export default function LoginPage() {
             />
           </div>
         </div>
-  Role hint
          <div className="mt-6 p-4 bg-primary-50 rounded-lg">
           <p className="text-xs text-primary-500 font-medium mb-2">Test Accounts:</p>
           <div className="grid grid-cols-2 gap-1 text-xs text-gray-400">
