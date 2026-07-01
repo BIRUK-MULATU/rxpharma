@@ -1,205 +1,217 @@
-//package com.rxpharma.service;
-//
-//import com.rxpharma.entity.User;
-//import com.rxpharma.exception.BadRequestException;
-//import com.rxpharma.repository.UserRepository;
-//import org.junit.jupiter.api.BeforeEach;
-//import org.junit.jupiter.api.Test;
-//import org.junit.jupiter.api.extension.ExtendWith;
-//import org.mockito.InjectMocks;
-//import org.mockito.Mock;
-//import org.mockito.junit.jupiter.MockitoExtension;
-//import org.springframework.security.crypto.password.PasswordEncoder;
-//
-//import java.util.List;
-//import java.util.Optional;
-//
-//import static org.junit.jupiter.api.Assertions.*;
-//import static org.mockito.ArgumentMatchers.any;
-//import static org.mockito.Mockito.*;
-//
-//@ExtendWith(MockitoExtension.class)
-//class UserServiceTest {
-//
-//    @Mock
-//    private UserRepository userRepository;
-//
-//    @Mock
-//    private PasswordEncoder passwordEncoder;
-//
-//    @InjectMocks
-//    private UserService userService;
-//
-//    private User user;
-//
-//    @BeforeEach
-//    void setUp() {
-//        user = new User();
-//        user.setId(1L);
-//        user.setFullName("Test User");
-//        user.setEmail("test@mail.com");
-//        user.setPassword("encoded-pass");
-//        user.setRole(User.Role.USER);
-//        user.setApproved(false);
-//    }
-//
-//    @Test
-//    void getAllUsers_ShouldReturnList() {
-//        when(userRepository.findAll()).thenReturn(List.of(user));
-//
-//        List<User> result = userService.getAllUsers();
-//
-//        assertEquals(1, result.size());
-//        verify(userRepository).findAll();
-//    }
-//
-//    @Test
-//    void getUserById_ShouldReturnUser() {
-//        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-//
-//        User result = userService.getUserById(1L);
-//
-//        assertEquals("Test User", result.getFullName());
-//    }
-//
-//    @Test
-//    void getUserById_ShouldThrowException_WhenNotFound() {
-//        when(userRepository.findById(1L)).thenReturn(Optional.empty());
-//
-//        RuntimeException ex = assertThrows(RuntimeException.class,
-//                () -> userService.getUserById(1L));
-//
-//        assertTrue(ex.getMessage().contains("User not found"));
-//    }
-//
-//    @Test
-//    void getUserByEmail_ShouldReturnUser() {
-//        when(userRepository.findByEmail("test@mail.com"))
-//                .thenReturn(Optional.of(user));
-//
-//        User result = userService.getUserByEmail("test@mail.com");
-//
-//        assertNotNull(result);
-//    }
-//
-//    @Test
-//    void updateUser_ShouldUpdateAndSave() {
-//        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-//        when(userRepository.save(any(User.class))).thenReturn(user);
-//
-//        User result = userService.updateUser(
-//                1L, "New Name", "new@mail.com", User.Role.ADMIN);
-//
-//        assertEquals("New Name", result.getFullName());
-//        assertEquals(User.Role.ADMIN, result.getRole());
-//
-//        verify(userRepository).save(any(User.class));
-//    }
-//
-//    @Test
-//    void deleteUser_ShouldDelete_WhenExists() {
-//        when(userRepository.existsById(1L)).thenReturn(true);
-//
-//        userService.deleteUser(1L);
-//
-//        verify(userRepository).deleteById(1L);
-//    }
-//
-//    @Test
-//    void deleteUser_ShouldThrow_WhenNotFound() {
-//        when(userRepository.existsById(1L)).thenReturn(false);
-//
-//        RuntimeException ex = assertThrows(RuntimeException.class,
-//                () -> userService.deleteUser(1L));
-//
-//        assertTrue(ex.getMessage().contains("User not found"));
-//    }
-//
-//    @Test
-//    void changePassword_ShouldUpdatePassword() {
-//        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-//        when(passwordEncoder.matches("old", "encoded-pass")).thenReturn(true);
-//        when(passwordEncoder.matches("new", "encoded-pass")).thenReturn(false);
-//        when(passwordEncoder.encode("new")).thenReturn("new-encoded");
-//
-//        userService.changePassword(1L, "old", "new", "new");
-//
-//        verify(userRepository).save(any(User.class));
-//    }
-//
-//    @Test
-//    void changePassword_ShouldFail_WhenCurrentPasswordWrong() {
-//        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-//        when(passwordEncoder.matches("wrong", "encoded-pass")).thenReturn(false);
-//
-//        assertThrows(BadRequestException.class,
-//                () -> userService.changePassword(1L, "wrong", "new", "new"));
-//    }
-//
-//    @Test
-//    void changePassword_ShouldFail_WhenPasswordsDoNotMatch() {
-//        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-//        when(passwordEncoder.matches("old", "encoded-pass")).thenReturn(true);
-//
-//        assertThrows(BadRequestException.class,
-//                () -> userService.changePassword(1L, "old", "new", "different"));
-//    }
-//
-//    @Test
-//    void adminResetPassword_ShouldSave() {
-//        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-//        when(passwordEncoder.encode("newpass")).thenReturn("encoded");
-//
-//        userService.adminResetPassword(1L, "newpass");
-//
-//        verify(userRepository).save(any(User.class));
-//    }
-//
-//    @Test
-//    void updateRole_ShouldUpdateRole() {
-//        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-//        when(userRepository.save(any(User.class))).thenReturn(user);
-//
-//        User result = userService.updateRole(1L, User.Role.ADMIN);
-//
-//        assertEquals(User.Role.ADMIN, result.getRole());
-//    }
-//
-//    @Test
-//    void approveUser_ShouldSetApprovedTrue() {
-//        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-//        when(userRepository.save(any(User.class))).thenReturn(user);
-//
-//        User result = userService.approveUser(1L);
-//
-//        assertTrue(result.isApproved());
-//    }
-//
-//    @Test
-//    void denyUser_ShouldDelete_WhenNotApproved() {
-//        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-//
-//        userService.denyUser(1L);
-//
-//        verify(userRepository).delete(user);
-//    }
-//
-//    @Test
-//    void denyUser_ShouldThrow_WhenAlreadyApproved() {
-//        user.setApproved(true);
-//
-//        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
-//
-//        assertThrows(BadRequestException.class,
-//                () -> userService.denyUser(1L));
-//    }
-//
-//    @Test
-//    void getPendingUsers_ShouldReturnList() {
-//        when(userRepository.findByApprovedFalse()).thenReturn(List.of(user));
-//
-//        List<User> result = userService.getPendingUsers();
-//
-//        assertEquals(1, result.size());
-//    }
-//}
+package com.rxpharma.service;
+
+import com.rxpharma.entity.User;
+import com.rxpharma.exception.BadRequestException;
+import com.rxpharma.repository.UserRepository;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
+import java.util.List;
+import java.util.Optional;
+
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+
+@ExtendWith(MockitoExtension.class)
+@DisplayName("UserService Tests")
+class UserServiceTest {
+
+    @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private PasswordEncoder passwordEncoder;
+
+    @InjectMocks
+    private UserService userService;
+
+    private User testUser;
+    private User pendingUser;
+
+    @BeforeEach
+    void setUp() {
+        testUser = User.builder()
+                .id(1L)
+                .fullName("Abebe Kebede")
+                .email("abebe@rxpharma.com")
+                .password("encodedPassword")
+                .role(User.Role.ADMIN)
+                .approved(true)
+                .authProvider("LOCAL")
+                .build();
+
+        pendingUser = User.builder()
+                .id(2L)
+                .fullName("Pending User")
+                .email("pending@gmail.com")
+                .password("encodedPassword")
+                .role(User.Role.PHARMACIST)
+                .approved(false)
+                .authProvider("GOOGLE")
+                .build();
+    }
+
+    // ─── getAllUsers ─────────────────────────────────────────────
+
+    @Test
+    @DisplayName("getAllUsers - returns all users")
+    void getAllUsers_returnsAll() {
+        when(userRepository.findAll()).thenReturn(List.of(testUser, pendingUser));
+
+        List<User> result = userService.getAllUsers();
+
+        assertThat(result).hasSize(2);
+        verify(userRepository).findAll();
+    }
+
+    @Test
+    @DisplayName("getAllUsers - empty list")
+    void getAllUsers_empty() {
+        when(userRepository.findAll()).thenReturn(List.of());
+
+        assertThat(userService.getAllUsers()).isEmpty();
+    }
+
+    // ─── getUserById ─────────────────────────────────────────────
+
+    @Test
+    void getUserById_found() {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+
+        User result = userService.getUserById(1L);
+
+        assertThat(result.getId()).isEqualTo(1L);
+    }
+
+    @Test
+    void getUserById_notFound() {
+        when(userRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> userService.getUserById(99L))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("User not found");
+    }
+
+    // ─── getUserByEmail ──────────────────────────────────────────
+
+    @Test
+    void getUserByEmail_found() {
+        when(userRepository.findByEmail("abebe@rxpharma.com"))
+                .thenReturn(Optional.of(testUser));
+
+        User result = userService.getUserByEmail("abebe@rxpharma.com");
+
+        assertThat(result.getEmail()).isEqualTo("abebe@rxpharma.com");
+    }
+
+    @Test
+    void getUserByEmail_notFound() {
+        when(userRepository.findByEmail("ghost@rxpharma.com"))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> userService.getUserByEmail("ghost@rxpharma.com"))
+                .isInstanceOf(RuntimeException.class);
+    }
+
+    // ─── updateUser ──────────────────────────────────────────────
+
+    @Test
+    void updateUser_success() {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+        when(userRepository.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
+
+        User result = userService.updateUser(
+                1L,
+                "Abebe Updated",
+                "updated@rxpharma.com",
+                User.Role.PHARMACIST
+        );
+
+        assertThat(result.getFullName()).isEqualTo("Abebe Updated");
+        assertThat(result.getEmail()).isEqualTo("updated@rxpharma.com");
+        assertThat(result.getRole()).isEqualTo(User.Role.PHARMACIST);
+    }
+
+    // ─── deleteUser ──────────────────────────────────────────────
+
+    @Test
+    void deleteUser_success() {
+        when(userRepository.existsById(1L)).thenReturn(true);
+
+        userService.deleteUser(1L);
+
+        verify(userRepository).deleteById(1L);
+    }
+
+    @Test
+    void deleteUser_notFound() {
+        when(userRepository.existsById(99L)).thenReturn(false);
+
+        assertThatThrownBy(() -> userService.deleteUser(99L))
+                .isInstanceOf(RuntimeException.class);
+    }
+
+    // ─── changePassword ──────────────────────────────────────────
+
+    @Test
+    void changePassword_success() {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+        when(passwordEncoder.matches("currentPass", "encodedPassword")).thenReturn(true);
+        when(passwordEncoder.matches("newPass", "encodedPassword")).thenReturn(false);
+        when(passwordEncoder.encode("newPass")).thenReturn("encodedNewPass");
+        when(userRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        userService.changePassword(1L, "currentPass", "newPass", "newPass");
+
+        verify(userRepository).save(any(User.class));
+    }
+
+    // ─── approveUser ─────────────────────────────────────────────
+
+    @Test
+    void approveUser_success() {
+        when(userRepository.findById(2L)).thenReturn(Optional.of(pendingUser));
+        when(userRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+
+        User result = userService.approveUser(2L);
+
+        assertThat(result.isApproved()).isTrue();
+    }
+
+    // ─── denyUser ────────────────────────────────────────────────
+
+    @Test
+    void denyUser_success() {
+        when(userRepository.findById(2L)).thenReturn(Optional.of(pendingUser));
+
+        userService.denyUser(2L);
+
+        verify(userRepository).delete(pendingUser);
+    }
+
+    @Test
+    void denyUser_alreadyApproved() {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+
+        assertThatThrownBy(() -> userService.denyUser(1L))
+                .isInstanceOf(BadRequestException.class);
+    }
+
+    // ─── getPendingUsers ────────────────────────────────────────
+
+    @Test
+    void getPendingUsers_returnsList() {
+        when(userRepository.findByApprovedFalse()).thenReturn(List.of(pendingUser));
+
+        List<User> result = userService.getPendingUsers();
+
+        assertThat(result).hasSize(1);
+    }
+}
